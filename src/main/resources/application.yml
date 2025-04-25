@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: Ziniumanas
+  datasource:
+    url: jdbc:postgresql://localhost:5432/newsman_db
+    username: postgres
+    password: Odvi770227*
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update # arba kita tinkama reikšmė (none, create, create-drop)
+    show-sql: true # Rodyti SQL užklausas konsolėje (naudojama vystymo metu)
+    properties:
+      hibernate:
+        format_sql: true # Gražiai formatuoti SQL užklausas

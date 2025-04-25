@@ -1,8 +1,4 @@
 package lt.ziniumanas.model.enums;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 public enum ArticleStatus {
         DRAFT,
         PENDING_APPROVAL,
@@ -11,7 +7,5 @@ public enum ArticleStatus {
         ARCHIVED,
         REJECTED
     }
-
-    // Jūsų Article klasėje:
 
 
