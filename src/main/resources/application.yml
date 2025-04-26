@@ -1,16 +1,23 @@
 spring:
   application:
     name: Ziniumanas
+  main:
+    allow-bean-definition-overriding: true
   datasource:
     url: jdbc:postgresql://localhost:5432/newsman_db
     username: postgres
-    password: Odvi770227*
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: update # arba kita tinkama reikšmė (none, create, create-drop)
     show-sql: true # Rodyti SQL užklausas konsolėje (naudojama vystymo metu)
     properties:
       hibernate:
         format_sql: true # Gražiai formatuoti SQL užklausas
+        use_sql_comments: true
+    open-in-view: false  # Išjungia atvaizdavimo metu užklausų atlikimą
+  logging:
+    level:
+     lt.ziniumanas.service.outsource: DEBUG
+     org.springframework: DEBUG

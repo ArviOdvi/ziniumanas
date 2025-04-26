@@ -3,7 +3,8 @@ package lt.ziniumanas.repository;
 import lt.ziniumanas.model.Article;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
-        // Galima pridėti papildomus metodus, jei reikės specifinių užklausų
+          // Galima pridėti papildomus metodus, jei reikės specifinių užklausų
     }
