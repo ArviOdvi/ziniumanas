@@ -9,5 +9,7 @@ import java.util.Optional;
 @Repository
 public interface NewsSourceRepository extends JpaRepository<NewsSource, Long> {
     // Čia galima pridėti papildomus metodus
+    Optional<NewsSource> findBySourceName(String sourceName);
+
     Optional<NewsSource> findByUrlAddressContainingIgnoreCase(String urlAddress);
 }

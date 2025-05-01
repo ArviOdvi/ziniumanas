@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="lt" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="fragments/head :: head('Ziniumanas - Naujienos')"></th:block>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- HEADER fragmentas -->
+<th:block th:replace="fragments/header :: header"></th:block>
+
+
+<main class="container my-5 flex-grow-1">
+    <article>
+        <h1 th:text="${article.articleName}">Straipsnio pavadinimas</h1>
+        <div class="text-muted small mb-3">
+            Paskelbta: <span th:text="${article.articleDate}">2025-04-26</span>
+        </div>
+        <div class="mb-4">
+            <span class="badge bg-secondary" th:text="${article.newsSource.sourceName}">Šaltinis</span>
+        </div>
+        <div th:text="${article.contents}">Straipsnio visas turinys...</div>
+    </article>
+
+    <div class="mt-4">
+        <a class="btn btn-outline-primary" href="/">← Grįžti į naujienas</a>
+    </div>
+</main>
+
+<th:block th:replace="fragments/footer :: footer"></th:block>
+
+</body>
+</html>

@@ -19,5 +19,7 @@ spring:
     open-in-view: false  # Išjungia atvaizdavimo metu užklausų atlikimą
   logging:
     level:
-     lt.ziniumanas.service.outsource: DEBUG
-     org.springframework: DEBUG
+      lt.ziniumanas.service.outsource: DEBUG
+      org.springframework: DEBUG
+server:
+  port: 8081
