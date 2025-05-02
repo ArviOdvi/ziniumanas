@@ -17,9 +17,5 @@ spring:
         format_sql: true # Gražiai formatuoti SQL užklausas
         use_sql_comments: true
     open-in-view: false  # Išjungia atvaizdavimo metu užklausų atlikimą
-  logging:
-    level:
-      lt.ziniumanas.service.outsource: DEBUG
-      org.springframework: DEBUG
 server:
   port: 8081
