@@ -72,7 +72,8 @@ public class OutsourceArticleService {
                             .timeout(10000)
                             .get();
 
-                    String title = doc.title();
+                    String rawTitle = doc.title();
+                    String title = cleanTitle(rawTitle);
                     Element dateElement = doc.selectFirst(rule.getDateSelector());
                     if (dateElement == null) {
                         logger.warn("⚠️ Nerasta data pagal selektorių '{}' URL: {}", rule.getDateSelector(), pending.getUrl());
@@ -132,5 +133,18 @@ public class OutsourceArticleService {
         }
         logger.error("❗ Nepavyko konvertuoti datos su jokiu formatu: '{}'", rawDate);
         return null;
+    }
+    private String cleanTitle(String rawTitle) {
+        String[] separators = {"\\|", "-", "–", ":"};
+
+        for (String sep : separators) {
+            if (rawTitle.contains(sep)) {
+                String[] parts = rawTitle.split(sep);
+                if (parts.length > 1) {
+                    return parts[0].trim();
+                }
+            }
+        }
+        return rawTitle.trim();
     }
 }
