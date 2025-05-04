@@ -105,6 +105,7 @@ public class OutsourceArticleService {
                                 .verificationStatus(false)
                                 .contents(content)
                                 .newsSource(source)
+                                .articleCategory("") // Nustatome kategoriją (articleCategorizationServicebyAI.categorizeArticle(content))
                                 .build();
                         articleRepository.save(article);
                         logger.info("💾 Išsaugotas straipsnis: {}", title);

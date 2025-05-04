@@ -35,6 +35,9 @@ public class Article {
     @Column(name = "verification_status")
     private boolean verificationStatus;
 
+    @Column(name = "article_category", nullable = false, length = 255)
+    private String articleCategory;
+
     @ManyToOne
     @JoinColumn(name = "news_source_id", nullable = false)
     private NewsSource newsSource;
