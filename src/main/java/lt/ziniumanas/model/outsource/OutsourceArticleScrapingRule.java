@@ -23,19 +23,16 @@ public class OutsourceArticleScrapingRule {
     @Column(name = "title_selector", nullable = false, length = 255)
     private String titleSelector;
 
-    @Column(name = "url_selector", nullable = false, length = 255)
-    private String urlSelector;
-
     @Column(name = "date_selector", nullable = false, length = 255)
     private String dateSelector;
 
-    @Column(name = "date_position", nullable = false, length = 50)
-    private String datePosition; // "before" arba "after"
+    @Column(name = "content_selector", nullable = false, length = 255)
+    private String contentSelector;
 
-    @Column(name = "date_format", nullable = false, length = 100)
-    private String dateFormat;
+    @Column(name = "content_selector_summary", nullable = false, length = 255)
+    private String contentSelectorSummary;
 
-    @Column(name = "alternative_date_attr", length = 100)
-    private String alternativeDateAttr;
+    @Column(name = "content_selector_paragraphs", nullable = false, length = 255)
+    private String contentSelectorParagraphs;
 }
 

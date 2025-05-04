@@ -102,7 +102,7 @@ public class OutsourceArticlePendingUrlService {
 
                 // Iteruojame per rastus pavadinimus ir ištraukime straipsnio nuorodas
                 for (Element postTitle : postTitles) {
-                    Element linkElement = postTitle.selectFirst(rule.getUrlSelector());
+                    Element linkElement = postTitle.selectFirst("a[href]"); // Randa pirmą <a> su href
                     if (linkElement != null) {
                         String url = linkElement.absUrl("href");
                         if (!url.isBlank() && foundUrls.add(url)) {

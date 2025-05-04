@@ -1,15 +1,12 @@
 package lt.ziniumanas.controller.openpublic;
 
-import lt.ziniumanas.HttpEndpoint;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.repository.ArticleRepository;
-import lt.ziniumanas.util.NewsmanDateTimeFormatUtil;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 //Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
