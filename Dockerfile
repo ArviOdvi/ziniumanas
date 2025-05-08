@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y maven
 # Nukopijuojame sertifikatus į konteinerį
 COPY certs/kurjeris.lt.crt /tmp/kurjeris.lt.crt
 COPY certs/_.lrt.lt.crt /tmp/_.lrt.lt.crt
+COPY certs/ve.lt.crt /tmp/ve.lt.crt
 
 # Įkeliame sertifikatus į JVM truststore
 RUN keytool -importcert \
@@ -24,6 +25,14 @@ RUN keytool -importcert \
   -trustcacerts \
   -alias lrt-lt \
   -file /tmp/_.lrt.lt.crt \
+  -keystore /usr/local/openjdk-21/lib/security/cacerts \
+  -storepass changeit
+
+RUN keytool -importcert \
+  -noprompt \
+  -trustcacerts \
+  -alias ve-lt \
+  -file /tmp/ve.lt.crt \
   -keystore /usr/local/openjdk-21/lib/security/cacerts \
   -storepass changeit
 

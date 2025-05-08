@@ -1,0 +1,29 @@
+<!-- templates/admin/ai-training.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Modelio Treniravimas</title>
+</head>
+<body>
+<h2>AI Modelio Treniravimas</h2>
+<p>Įveskite tekstus ir jų kategorijas, kad apmokytumėte modelį.</p>
+
+<form method="post" th:action="@{/admin/train}">
+  <div>
+    <label for="texts">Tekstai (vienas per eilutę):</label><br>
+    <textarea name="texts" id="texts" rows="5" cols="50"></textarea>
+  </div>
+  <div>
+    <label for="labels">Kategorijos (viena per eilutę, atitinkanti tekstų eilutes):</label><br>
+    <textarea name="labels" id="labels" rows="5" cols="50"></textarea>
+  </div>
+  <br>
+  <button type="submit">Treniruoti modelį</button>
+</form>
+
+<div th:if="${message}">
+  <p th:text="${message}"></p>
+</div>
+</body>
+</html>

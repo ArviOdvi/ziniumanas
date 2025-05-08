@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="lt" xmlns:th="http://www.thymeleaf.org">
+<th:block th:replace="~{fragments/head :: head('Ziniumanas - Naujienos')}"></th:block>
+<body class="d-flex flex-column min-vh-100">
+
+<!-- HEADER fragmentas -->
+<th:block th:replace="fragments/header :: header"></th:block>
+
+<main class="container my-5 flex-grow-1">
+  <div class="row">
+    <div class="col-md-8">
+      <div th:each="article : ${articles}">
+        <article class="mb-4">
+          <div class="text-muted small mb-1" th:text="${article.articleDate}">2025-04-26</div>
+          <div class="mb-4">
+            <span class="badge bg-secondary" th:text="${article.newsSource.sourceName}">Šaltinis</span>
+          </div>
+          <h2>
+            <a th:href="@{/straipsnis/{id}(id=${article.id})}" th:text="${article.articleName}"
+               class="text-dark text-decoration-none">Straipsnio pavadinimas</a>
+          </h2>
+          <p th:text="${#strings.abbreviate(article.contents, 200)}"></p>
+          <a th:href="@{/straipsnis/{id}(id=${article.id})}" class="btn btn-sm btn-primary">Skaityti daugiau</a>
+        </article>
+      </div>
+    </div>
+
+    <aside class="col-md-4">
+      <div class="p-3 mb-3 bg-light rounded">
+        <p class="fst-italic">Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.</p>
+        <p class="fst-italic">Autorius nežinomas</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<th:block th:replace="fragments/footer :: footer"></th:block>
+
+</body>
+</html>
