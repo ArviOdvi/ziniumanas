@@ -20,11 +20,4 @@ public class AdminController {
         model.addAttribute("content", "admin/scraping-rules :: main"); // Nurodome fragmentą iš scraping-rules.html
         return "admin/layout";
     }
-
-    @GetMapping("/ai-training")
-    public String showAiTrainingAdmin(Model model) {
-        model.addAttribute("title", "AI Treniravimas");
-        model.addAttribute("content", "admin/ai-training :: main"); // Nurodome fragmentą iš ai-training.html
-        return "admin/layout";
-    }
 }

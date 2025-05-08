@@ -27,7 +27,8 @@ import java.util.*;
 public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingServicebyAdmin.class);
 
-    @Value("${model.save.path:model.zip}")
+    // Konfigūracija per application.properties failą
+    @Value("${model.save.path:ArticleCategorizationAImodel.zip}")
     private String modelSavePath;
 
     @Value("${paragraph.vectors.save.path:paragraph_vectors.zip}")
@@ -42,22 +43,24 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     @Value("${model.batch.size:32}")
     private int batchSize;
 
+    // Modelio kūrimas
     public MultiLayerNetwork createModel(int inputSize, int numClasses) {
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
-                .updater(new Adam(0.001))
-                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(0.001))  // Naudojame Adam optimizatorių
+                .weightInit(WeightInit.XAVIER)  // Tinklo svorių inicializavimas
                 .list()
-                .layer(new DenseLayer.Builder().nIn(inputSize).nOut(hiddenLayerSize).activation(Activation.RELU).build())
-                .layer(new OutputLayer.Builder().nIn(hiddenLayerSize).nOut(numClasses).activation(Activation.SOFTMAX).build())
+                .layer(new DenseLayer.Builder().nIn(inputSize).nOut(hiddenLayerSize).activation(Activation.RELU).build()) // Paslėptas sluoksnis
+                .layer(new OutputLayer.Builder().nIn(hiddenLayerSize).nOut(numClasses).activation(Activation.SOFTMAX).build()) // Išvesties sluoksnis
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(config);
-        model.init();
-        model.setListeners(new ScoreIterationListener(100));
+        model.init();  // Inicijuojame modelį
+        model.setListeners(new ScoreIterationListener(100));  // Reguliariai išvedame treniravimo klaidą
         log.info("Neuroninis tinklas sukurtas su įvesties dydžiu {} ir {} klasėmis", inputSize, numClasses);
         return model;
     }
 
+    // Modelio treniravimas
     public void trainModel(List<String> texts, List<String> labels) {
         if (texts.isEmpty() || labels.isEmpty() || texts.size() != labels.size()) {
             throw new IllegalArgumentException("Įvesties duomenys neteisingi: tekstai ir etiketės turi būti netušti ir vienodo dydžio");
@@ -111,5 +114,11 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         } catch (IOException e) {
             throw new RuntimeException("Nepavyko išsaugoti neuroninio tinklo modelio", e);
         }
+    }
+    public void trainModel(Map<String, String> textsWithLabels, String modelSavePath) {
+        // Panaudokite textsWithLabels čia
+        // Pvz., pritaikykite vektorizaciją ar kitas operacijas
+
+        // Toliau apdorokite duomenis ir treniruokite modelį
     }
 }

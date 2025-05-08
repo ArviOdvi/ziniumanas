@@ -22,3 +22,6 @@ server:
   error:
     whitelabel:
       enabled: false
+model:
+  save:
+    path: "data/ArticleCategorizationAImodel.zip"

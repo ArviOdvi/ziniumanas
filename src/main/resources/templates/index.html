@@ -4,8 +4,7 @@
 <body class="d-flex flex-column min-vh-100">
 
 <!-- HEADER fragmentas -->
-<th:block th:replace="fragments/header :: header"></th:block>
-
+<th:block th:replace="~{fragments/header :: header}"></th:block>
 <main class="container my-5 flex-grow-1">
     <div class="row">
         <div class="col-md-8">
@@ -34,7 +33,7 @@
     </div>
 </main>
 
-<th:block th:replace="fragments/footer :: footer"></th:block>
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
 </body>
 </html>
