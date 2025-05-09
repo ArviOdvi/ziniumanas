@@ -1,38 +1,128 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="lt" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <title>AI Modelio Treniravimas</title>
-  <style>
-    .error { color: red; }
-    textarea { width: 100%; max-width: 600px; }
-    label { display: block; margin-top: 10px; }
-    button { margin-top: 15px; }
-  </style>
+  <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}">
 </head>
 <body>
-<h2>AI Modelio Treniravimas</h2>
-<p>Įveskite tekstus ir jų kategorijas, kad apmokytumėte modelį. Kiekvienas tekstas ir kategorija turi būti atskiroje eilutėje.</p>
+<div class="container mt-5">
+  <h1 class="text-center mb-4">AI Modelio Treniravimas</h1>
+  <p class="text-center mb-4">Įveskite tekstus ir jų kategorijas, kad apmokytumėte modelį. Spauskite „Pridėti įrašą“, kad įvestumėte naują tekstą ir kategoriją.</p>
 
-<form method="post" th:action="@{/admin/ai-training}" th:object="${trainingDto}">
-  <!-- CSRF apsauga (jei naudojate Spring Security) -->
-  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-
-  <div>
-    <label for="texts">Tekstai (vienas per eilutę):</label>
-    <textarea name="texts" id="texts" rows="10" th:field="*{texts}" th:class="${#fields.hasErrors('texts')} ? 'error'"></textarea>
-    <span class="error" th:errors="*{texts}"></span>
+  <!-- Pranešimų rodymas -->
+  <div th:if="${message}" th:class="'alert alert-' + ${messageType ?: 'info'} + ' alert-dismissible fade show'" role="alert">
+    <span th:text="${message}"></span>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   </div>
-  <div>
-    <label for="labels">Kategorijos (vienas per eilutę, atitinkanti tekstų eilutes):</label>
-    <textarea name="labels" id="labels" rows="10" th:field="*{labels}" th:class="${#fields.hasErrors('labels')} ? 'error'"></textarea>
-    <span class="error" th:errors="*{labels}"></span>
-  </div>
-  <button type="submit">Treniruoti modelį</button>
-</form>
 
-<div th:if="${message != null}">
-  <p th:class="${#strings.contains(message, 'Klaida') ? 'error' : 'success'}" th:text="${message}"></p>
+  <!-- Forma -->
+  <form th:action="@{/admin/ai-training}" th:object="${trainingDto}" method="post" class="mt-4" id="training-form">
+    <!-- CSRF apsauga -->
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+    <!-- Įrašų konteineris -->
+    <div id="entries-container">
+      <th:block th:with="textsSize=${trainingDto.texts != null ? #lists.size(trainingDto.texts) : 0}, labelsSize=${trainingDto.labels != null ? #lists.size(trainingDto.labels) : 0}, maxSize=${textsSize > 0 and labelsSize > 0 ? (textsSize < labelsSize ? textsSize : labelsSize) : 0}">
+        <th:block th:if="${maxSize > 0}">
+          <div th:each="i : ${#numbers.sequence(0, maxSize - 1)}" class="entry mb-3" th:id="'entry-' + ${i}">
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Tekstas</label>
+                <textarea name="texts" class="form-control" rows="4" th:text="${trainingDto.texts[i]}" placeholder="Įveskite tekstą" th:class="${#fields.hasErrors('texts')} ? 'is-invalid' : ''"></textarea>
+                <div th:if="${#fields.hasErrors('texts')}" th:errors="*{texts}" class="invalid-feedback"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Kategorija</label>
+                <textarea name="labels" class="form-control" rows="4" th:text="${trainingDto.labels[i]}" placeholder="Įveskite kategoriją" th:class="${#fields.hasErrors('labels')} ? 'is-invalid' : ''"></textarea>
+                <div th:if="${#fields.hasErrors('labels')}" th:errors="*{labels}" class="invalid-feedback"></div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm mt-2" th:onclick="'removeEntry(\'' + 'entry-' + ${i} + '\')'">Pašalinti</button>
+          </div>
+        </th:block>
+        <th:block th:unless="${maxSize > 0}">
+          <div class="entry mb-3" id="entry-0">
+            <div class="row">
+              <div class="col-md-6">
+                <label class="form-label">Tekstas</label>
+                <textarea name="texts" class="form-control" rows="4" placeholder="Įveskite tekstą" th:class="${#fields.hasErrors('texts')} ? 'is-invalid' : ''"></textarea>
+                <div th:if="${#fields.hasErrors('texts')}" th:errors="*{texts}" class="invalid-feedback"></div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Kategorija</label>
+                <textarea name="labels" class="form-control" rows="4" placeholder="Įveskite kategoriją" th:class="${#fields.hasErrors('labels')} ? 'is-invalid' : ''"></textarea>
+                <div th:if="${#fields.hasErrors('labels')}" th:errors="*{labels}" class="invalid-feedback"></div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeEntry('entry-0')">Pašalinti</button>
+          </div>
+        </th:block>
+      </th:block>
+    </div>
+
+    <!-- Pridėti įrašą mygtukas -->
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-3 mb-3" onclick="addEntry()">Pridėti įrašą</button>
+
+    <div class="text-center">
+      <button type="submit" class="btn btn-primary" id="submit-btn">
+        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+        Treniruoti modelį
+      </button>
+    </div>
+  </form>
 </div>
+
+<script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
+<script>
+  let entryCount = document.querySelectorAll('.entry').length;
+
+  function addEntry() {
+    const container = document.getElementById('entries-container');
+    const entryDiv = document.createElement('div');
+    entryDiv.className = 'entry mb-3';
+    entryDiv.id = `entry-${entryCount}`;
+    entryDiv.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Tekstas</label>
+                        <textarea name="texts" class="form-control" rows="4" placeholder="Įveskite tekstą"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Kategorija</label>
+                        <textarea name="labels" class="form-control" rows="4" placeholder="Įveskite kategoriją"></textarea>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeEntry('entry-${entryCount}')">Pašalinti</button>
+            `;
+    container.appendChild(entryDiv);
+    entryCount++;
+  }
+
+  function removeEntry(id) {
+    const entry = document.getElementById(id);
+    if (document.querySelectorAll('.entry').length > 1) {
+      entry.remove();
+    } else {
+      alert('Turi likti bent vienas įrašas.');
+    }
+  }
+
+  // Klientų pusės validacija
+  document.getElementById('training-form').addEventListener('submit', (e) => {
+    const textareas = document.querySelectorAll('textarea[name="texts"], textarea[name="labels"]');
+    for (let textarea of textareas) {
+      if (!textarea.value.trim()) {
+        e.preventDefault();
+        alert('Visi laukai turi būti užpildyti.');
+        return;
+      }
+    }
+    // Rodyti progreso indikatorių
+    const btn = document.getElementById('submit-btn');
+    btn.querySelector('.spinner-border').classList.remove('d-none');
+    btn.disabled = true;
+  });
+</script>
 </body>
 </html>
