@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="lt" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8">
   <title>Klaida</title>
 </head>
 <body>
 <h1>Įvyko klaida</h1>
-<p th:text="${message} ?: 'Atsiprašome, įvyko nenumatyta klaida.'">Atsiprašome, įvyko nenumatyta klaida.</p>
+<p th:text="${errorMessage ?: 'Atsiprašome, įvyko nenumatyta klaida.'}"></p>
+<a th:href="@{/admin/ai-training}">Grįžti į treniravimo formą</a>
 </body>
 </html>

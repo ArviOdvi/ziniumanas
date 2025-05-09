@@ -7,37 +7,47 @@ import org.deeplearning4j.text.documentiterator.LabelsSource;
 import java.util.*;
 
 public class SimpleLabelAwareIterator implements LabelAwareIterator {
-    private final Iterator<LabelledDocument> iterator;
+    private final List<LabelledDocument> documents;
     private final LabelsSource labelsSource;
+    private Iterator<LabelledDocument> currentIterator;
 
     public SimpleLabelAwareIterator(Iterator<LabelledDocument> documents, Set<String> labels) {
         if (labels == null) {
             throw new IllegalArgumentException("Labels cannot be null");
         }
-        this.iterator = documents;
-        // Naudojame DL4J pateiktą LabelsSource klasę
-        this.labelsSource = new LabelsSource(new java.util.ArrayList<>(labels));
+        if (documents == null) {
+            throw new IllegalArgumentException("Documents iterator cannot be null");
+        }
+
+        // Saugome dokumentus sąraše, kad galėtume resetinti
+        this.documents = new ArrayList<>();
+        documents.forEachRemaining(this.documents::add);
+        this.labelsSource = new LabelsSource(new ArrayList<>(labels));
+        this.currentIterator = this.documents.iterator();
     }
 
     @Override
     public boolean hasNextDocument() {
-        return iterator.hasNext();
+        return currentIterator.hasNext();
     }
 
     @Override
     public LabelledDocument nextDocument() {
-        return iterator.next();
+        return currentIterator.next();
     }
 
     @Override
     public void reset() {
-        // Jei reikia resetinti ir LabelsSource, galite tai padaryti čia
+        // Grąžiname iteratorių į pradžią
+        this.currentIterator = documents.iterator();
+        // Resetiname LabelsSource, jei reikia
         this.labelsSource.reset();
-        throw new UnsupportedOperationException("Reset not fully implemented");
     }
 
     @Override
-    public void shutdown() {}
+    public void shutdown() {
+        // Nereikia specialaus uždarymo
+    }
 
     @Override
     public boolean hasNext() {

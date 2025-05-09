@@ -1,29 +1,38 @@
-<!-- templates/admin/ai-training.html -->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8">
   <title>AI Modelio Treniravimas</title>
+  <style>
+    .error { color: red; }
+    textarea { width: 100%; max-width: 600px; }
+    label { display: block; margin-top: 10px; }
+    button { margin-top: 15px; }
+  </style>
 </head>
 <body>
 <h2>AI Modelio Treniravimas</h2>
-<p>Įveskite tekstus ir jų kategorijas, kad apmokytumėte modelį.</p>
+<p>Įveskite tekstus ir jų kategorijas, kad apmokytumėte modelį. Kiekvienas tekstas ir kategorija turi būti atskiroje eilutėje.</p>
 
-<form method="post" th:action="@{/admin/train}">
+<form method="post" th:action="@{/admin/ai-training}" th:object="${trainingDto}">
+  <!-- CSRF apsauga (jei naudojate Spring Security) -->
+  <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
   <div>
-    <label for="texts">Tekstai (vienas per eilutę):</label><br>
-    <textarea name="texts" id="texts" rows="5" cols="50"></textarea>
+    <label for="texts">Tekstai (vienas per eilutę):</label>
+    <textarea name="texts" id="texts" rows="10" th:field="*{texts}" th:class="${#fields.hasErrors('texts')} ? 'error'"></textarea>
+    <span class="error" th:errors="*{texts}"></span>
   </div>
   <div>
-    <label for="labels">Kategorijos (viena per eilutę, atitinkanti tekstų eilutes):</label><br>
-    <textarea name="labels" id="labels" rows="5" cols="50"></textarea>
+    <label for="labels">Kategorijos (vienas per eilutę, atitinkanti tekstų eilutes):</label>
+    <textarea name="labels" id="labels" rows="10" th:field="*{labels}" th:class="${#fields.hasErrors('labels')} ? 'error'"></textarea>
+    <span class="error" th:errors="*{labels}"></span>
   </div>
-  <br>
   <button type="submit">Treniruoti modelį</button>
 </form>
 
-<div th:if="${message}">
-  <p th:text="${message}"></p>
+<div th:if="${message != null}">
+  <p th:class="${#strings.contains(message, 'Klaida') ? 'error' : 'success'}" th:text="${message}"></p>
 </div>
 </body>
 </html>

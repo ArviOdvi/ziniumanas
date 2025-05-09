@@ -10,13 +10,15 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: update # arba kita tinkama reikšmė (none, create, create-drop)
-    show-sql: true # Rodyti SQL užklausas konsolėje (naudojama vystymo metu)
+      ddl-auto: update
+    show-sql: true
     properties:
       hibernate:
-        format_sql: true # Gražiai formatuoti SQL užklausas
+        format_sql: true
         use_sql_comments: true
-    open-in-view: false  # Išjungia atvaizdavimo metu užklausų atlikimą
+    open-in-view: false
+  thymeleaf:
+    cache: false # Išjungia Thymeleaf talpyklą vystymo metu
 server:
   port: 8081
   error:
@@ -25,3 +27,22 @@ server:
 model:
   save:
     path: "data/ArticleCategorizationAImodel.zip"
+paragraph:
+  vectors:
+    save:
+      path: "data/paragraph_vectors.zip"
+    epochs: 1
+    min:
+      word:
+        frequency: 0
+    layer:
+      size: 100
+    learning:
+      rate: 0.025
+    window:
+      size: 5
+logging:
+  level:
+    lt.ziniumanas: DEBUG # Detalesnis logavimas jūsų paketams
+    org.deeplearning4j: INFO
+    org.nd4j: INFO
