@@ -28,29 +28,29 @@ public class ArticleCategorizationServicebyAI {
     private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
     private MultiLayerNetwork model;
     private ParagraphVectors paragraphVectors;
-    private final List<String> classes = Arrays.asList("Sportas", "Ekonomika", "Politika");
+    private final List<String> classes = Arrays.asList(
+            "Sportas", "Ekonomika", "Politika", "Kultūra", "Technologijos", "Sveikata",
+            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika"
+    );
 
     @Value("${model.save.path:models/ArticleCategorizationAImodel.zip}")
     private String modelSavePath;
 
-    @Value("${paragraph.vectors.save.path:models/paragraph_vectors.zip}")
+    @Value("${paragraph.vectors.save.path:models/Article_categorization_paragraph_vectors.zip}")
     private String paragraphVectorsSavePath;
 
     @PostConstruct
     public void init() {
-        // Patikriname modelSavePath
         if (modelSavePath == null || modelSavePath.trim().isEmpty()) {
             logger.error("model.save.path nėra nustatytas arba yra tuščias");
-            throw new IllegalStateException("model.save.path nėra nustatytas");
+            return;
         }
 
-        // Patikriname paragraphVectorsSavePath
         if (paragraphVectorsSavePath == null || paragraphVectorsSavePath.trim().isEmpty()) {
             logger.error("paragraph.vectors.save.path nėra nustatytas arba yra tuščias");
-            throw new IllegalStateException("paragraph.vectors.save.path nėra nustatytas");
+            return;
         }
 
-        // Įkeliame neuroninį tinklą
         File modelFile = new File(modelSavePath);
         if (modelFile.exists() && modelFile.canRead()) {
             try {
@@ -58,14 +58,13 @@ public class ArticleCategorizationServicebyAI {
                 logger.info("Neuroninis tinklas sėkmingai įkeltas iš {}", modelSavePath);
             } catch (IOException e) {
                 logger.error("Klaida įkeliant neuroninį tinklą iš '{}': {}", modelSavePath, e.getMessage(), e);
-                throw new RuntimeException("Nepavyko įkelti neuroninio tinklo", e);
+                model = null;
             }
         } else {
-            logger.error("Neuroninio tinklo failas '{}' nerastas arba neįskaitomas", modelSavePath);
-            throw new IllegalStateException("Neuroninio tinklo failas nerastas: " + modelSavePath);
+            logger.warn("Neuroninio tinklo failas '{}' nerastas. Modelis neįkeltas, reikia treniruoti.", modelSavePath);
+            model = null;
         }
 
-        // Įkeliame ParagraphVectors
         File pvFile = new File(paragraphVectorsSavePath);
         if (pvFile.exists() && pvFile.canRead()) {
             try {
@@ -73,18 +72,18 @@ public class ArticleCategorizationServicebyAI {
                 logger.info("ParagraphVectors sėkmingai įkeltas iš {}", paragraphVectorsSavePath);
             } catch (Exception e) {
                 logger.error("Klaida įkeliant ParagraphVectors iš '{}': {}", paragraphVectorsSavePath, e.getMessage(), e);
-                throw new RuntimeException("Nepavyko įkelti ParagraphVectors", e);
+                paragraphVectors = null;
             }
         } else {
-            logger.error("ParagraphVectors failas '{}' nerastas arba neįskaitomas", paragraphVectorsSavePath);
-            throw new IllegalStateException("ParagraphVectors failas nerastas: " + paragraphVectorsSavePath);
+            logger.warn("ParagraphVectors failas '{}' nerastas. Modelis neįkeltas, reikia treniruoti.", paragraphVectorsSavePath);
+            paragraphVectors = null;
         }
     }
 
     public String categorizeArticle(String text) {
         if (model == null || paragraphVectors == null) {
             logger.error("Modelis arba ParagraphVectors neįkeltas, negalima atlikti prognozės");
-            return "Modelis neįkeltas";
+            return "Modelis neįkeltas. Prašome treniruoti modelį per /admin/ai-training.";
         }
 
         if (text == null || text.trim().isEmpty()) {
@@ -93,23 +92,20 @@ public class ArticleCategorizationServicebyAI {
         }
 
         try {
-            // Vektorizuojame tekstą
             INDArray features = TextVectorizer.vectorize(Arrays.asList(text), paragraphVectors);
-            logger.debug("Vektorizuotas tekstas: {}", text);
+            logger.debug("Vektorizuotas tekstas: {}", text.substring(0, Math.min(text.length(), 50)));
 
-            // Normalizuojame požymius
             DataNormalization normalizer = new NormalizerMinMaxScaler();
             normalizer.fit(new DataSet(features, features));
             normalizer.transform(features);
 
-            // Atliekame prognozę
             INDArray output = model.output(features);
             int predictedIdx = Nd4j.argMax(output, 1).getInt(0);
             String predictedClass = predictedIdx < classes.size() ? classes.get(predictedIdx) : "Nežinoma";
-            logger.info("Prognozuota kategorija tekstui '{}': {}", text, predictedClass);
+            logger.info("Prognozuota kategorija tekstui '{}': {}", text.substring(0, Math.min(text.length(), 50)), predictedClass);
             return predictedClass;
         } catch (Exception e) {
-            logger.error("Klaida prognozuojant kategoriją tekstui '{}': {}", text, e.getMessage(), e);
+            logger.error("Klaida prognozuojant kategoriją tekstui '{}': {}", text.substring(0, Math.min(text.length(), 50)), e.getMessage(), e);
             return "Klaida";
         }
     }

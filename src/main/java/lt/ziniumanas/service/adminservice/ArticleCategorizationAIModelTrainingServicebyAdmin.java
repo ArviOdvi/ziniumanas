@@ -1,7 +1,6 @@
 package lt.ziniumanas.service.adminservice;
 
 import lt.ziniumanas.nlp.TextVectorizer;
-import org.deeplearning4j.datasets.iterator.utilty.ListDataSetIterator;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
@@ -14,7 +13,6 @@ import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.dataset.DataSet;
-import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.factory.Nd4j;
@@ -32,29 +30,33 @@ import java.util.*;
 @Service
 public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingServicebyAdmin.class);
+    private static final List<String> CLASSES = Arrays.asList(
+            "Sportas", "Ekonomika", "Politika", "Kultūra", "Technologijos", "Sveikata",
+            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika"
+    );
 
     @Value("${model.save.path:models/ArticleCategorizationAImodel.zip}")
     private String modelSavePath;
 
-    @Value("${paragraph.vectors.save.path:models/paragraph_vectors.zip}")
+    @Value("${paragraph.vectors.save.path:models/Article_categorization_paragraph_vectors.zip}")
     private String paragraphVectorsSavePath;
 
-    @Value("${model.epochs:10}")
+    @Value("${model.epochs:30}")
     private int epochs;
 
-    @Value("${model.hidden.layer.size:100}")
+    @Value("${model.hidden.layer.size:300}")
     private int hiddenLayerSize;
 
-    @Value("${model.batch.size:4}")
+    @Value("${model.batch.size:16}")
     private int batchSize;
 
     @Value("${paragraph.vectors.min.word.frequency:1}")
     private int minWordFrequency;
 
-    @Value("${paragraph.vectors.layer.size:100}")
+    @Value("${paragraph.vectors.layer.size:300}")
     private int pvLayerSize;
 
-    @Value("${paragraph.vectors.epochs:10}")
+    @Value("${paragraph.vectors.epochs:30}")
     private int pvEpochs;
 
     @Value("${paragraph.vectors.learning.rate:0.025}")
@@ -64,12 +66,31 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     private int pvWindowSize;
 
     public MultiLayerNetwork createModel(int inputSize, int numClasses) {
+        if (numClasses != CLASSES.size()) {
+            log.warn("Kategorijų skaičius ({}) neatitinka laukiamo ({}). Tikrinami treniravimo duomenys.", numClasses, CLASSES.size());
+        }
+
         MultiLayerConfiguration config = new NeuralNetConfiguration.Builder()
+                .seed(123)
                 .updater(new Adam(0.001))
                 .weightInit(WeightInit.XAVIER)
+                .l2(1e-4)
                 .list()
-                .layer(new DenseLayer.Builder().nIn(inputSize).nOut(hiddenLayerSize).activation(Activation.RELU).build())
-                .layer(new OutputLayer.Builder().nIn(hiddenLayerSize).nOut(numClasses).activation(Activation.SOFTMAX).build())
+                .layer(new DenseLayer.Builder()
+                        .nIn(inputSize)
+                        .nOut(hiddenLayerSize)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nIn(hiddenLayerSize)
+                        .nOut(hiddenLayerSize / 2)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new OutputLayer.Builder(LossFunctions.LossFunction.NEGATIVELOGLIKELIHOOD)
+                        .nIn(hiddenLayerSize / 2)
+                        .nOut(numClasses)
+                        .activation(Activation.SOFTMAX)
+                        .build())
                 .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(config);
@@ -84,7 +105,6 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
             throw new IllegalArgumentException("Tekstai ir etiketės turi būti netušti ir vienodo dydžio");
         }
 
-        // Loguojame įvesties duomenis
         log.info("Gauta {} tekstų ir {} etikečių. Pirmasis tekstas: '{}', pirmoji etiketė: '{}'",
                 texts.size(), labels.size(), texts.get(0), labels.get(0));
 
@@ -104,18 +124,38 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         }
         log.info("Galiojančių tekstų: {}, etikečių: {}", validTexts.size(), validLabels.size());
 
+        // Tikriname, ar visos kategorijos yra iš CLASSES
+        Set<String> uniqueLabels = new HashSet<>(validLabels);
+        for (String label : uniqueLabels) {
+            if (!CLASSES.contains(label)) {
+                log.warn("Nerasta etiketė '{}' tarp galimų kategorijų: {}", label, CLASSES);
+            }
+        }
+        if (uniqueLabels.size() < CLASSES.size()) {
+            log.warn("Treniravimo duomenys apima tik {}/{} kategorijų", uniqueLabels.size(), CLASSES.size());
+        }
+
         // Sukuriame tekstų ir etikečių žemėlapį
         Map<String, String> textsWithLabels = new HashMap<>();
         for (int i = 0; i < validTexts.size(); i++) {
             textsWithLabels.put(validLabels.get(i) + "_" + i, validTexts.get(i));
         }
 
-        // Tikriname, ar ParagraphVectors modelis jau egzistuoja
+        // Treniruojame arba įkeliame ParagraphVectors
         ParagraphVectors paragraphVectors;
         File pvFile = new File(paragraphVectorsSavePath);
         if (pvFile.exists()) {
             log.info("Įkeliamas egzistuojantis ParagraphVectors modelis iš {}", paragraphVectorsSavePath);
             paragraphVectors = TextVectorizer.loadModel(paragraphVectorsSavePath);
+            // Treniruojame iš naujo su visais tekstais, kad atnaujintume modelį
+            log.info("Atnaujinamas ParagraphVectors modelis su {} tekstais", validTexts.size());
+            try {
+                paragraphVectors = TextVectorizer.trainModel(textsWithLabels, paragraphVectorsSavePath,
+                        minWordFrequency, pvLayerSize, pvEpochs, pvLearningRate, pvWindowSize);
+            } catch (Exception e) {
+                log.error("Nepavyko atnaujinti ParagraphVectors modelio: {}", e.getMessage());
+                throw new RuntimeException("ParagraphVectors treniravimo klaida", e);
+            }
         } else {
             log.info("Treniruojamas naujas ParagraphVectors modelis");
             try {
@@ -143,15 +183,19 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         normalizer.transform(features);
 
         // Paverčiame etiketes į one-hot formatą
-        List<String> uniqueLabels = new ArrayList<>(new HashSet<>(validLabels));
         Map<String, Integer> labelMap = new HashMap<>();
-        for (int i = 0; i < uniqueLabels.size(); i++) {
-            labelMap.put(uniqueLabels.get(i), i);
+        for (int i = 0; i < CLASSES.size(); i++) {
+            labelMap.put(CLASSES.get(i), i);
         }
 
-        INDArray target = Nd4j.zeros(validTexts.size(), uniqueLabels.size());
+        INDArray target = Nd4j.zeros(validTexts.size(), CLASSES.size());
         for (int i = 0; i < validTexts.size(); i++) {
-            target.putScalar(i, labelMap.get(validLabels.get(i)), 1.0);
+            String label = validLabels.get(i);
+            if (labelMap.containsKey(label)) {
+                target.putScalar(i, labelMap.get(label), 1.0);
+            } else {
+                log.warn("Nepaisoma nežinoma etiketė: {}", label);
+            }
         }
 
         // Patikriname dimensijas
@@ -162,20 +206,32 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
                     features.rows() + " vs " + target.rows());
         }
 
-        // Sukuriame modelį
-        MultiLayerNetwork model = createModel(features.columns(), uniqueLabels.size());
+        // Įkeliame esamą modelį arba kuriame naują
+        MultiLayerNetwork model;
+        File modelFile = new File(modelSavePath);
+        if (modelFile.exists()) {
+            log.info("Įkeliamas egzistuojantis neuroninis tinklas iš {}", modelSavePath);
+            try {
+                model = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+                model.setListeners(new ScoreIterationListener(100));
+            } catch (IOException e) {
+                log.warn("Nepavyko įkelti esamo modelio, kuriamas naujas: {}", e.getMessage());
+                model = createModel(features.columns(), CLASSES.size());
+            }
+        } else {
+            log.info("Treniruojamas naujas neuroninis tinklas");
+            model = createModel(features.columns(), CLASSES.size());
+        }
 
-        // Sukuriame pilną duomenų rinkinį
+        // Sukuriame DataSet
         DataSet fullDataSet = new DataSet(features, target);
 
         // Treniruojame modelį per epochas
         long startTime = System.currentTimeMillis();
         for (int epoch = 0; epoch < epochs; epoch++) {
-            // Padalijame duomenis į mini-partijas
             int numExamples = fullDataSet.numExamples();
             for (int i = 0; i < numExamples; i += batchSize) {
                 int endIndex = Math.min(i + batchSize, numExamples);
-                // Iškerpame mini-partiją
                 INDArray batchFeatures = features.get(NDArrayIndex.interval(i, endIndex), NDArrayIndex.all());
                 INDArray batchLabels = target.get(NDArrayIndex.interval(i, endIndex), NDArrayIndex.all());
                 DataSet batch = new DataSet(batchFeatures, batchLabels);
@@ -193,7 +249,6 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
 
         // Išsaugome modelį
         try {
-            File modelFile = new File(modelSavePath);
             if (!modelFile.getParentFile().exists() && !modelFile.getParentFile().mkdirs()) {
                 throw new IOException("Nepavyko sukurti katalogo: " + modelFile.getParentFile().getAbsolutePath());
             }

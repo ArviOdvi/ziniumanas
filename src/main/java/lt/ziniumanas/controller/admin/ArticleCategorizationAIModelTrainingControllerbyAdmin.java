@@ -3,6 +3,8 @@ package lt.ziniumanas.controller.admin;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
+import lt.ziniumanas.model.aimodel.TrainingData;
+import lt.ziniumanas.repository.airepository.TrainingDataRepository;
 import lt.ziniumanas.service.adminservice.ArticleCategorizationAIModelTrainingServicebyAdmin;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -28,12 +30,19 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
     private ArticleCategorizationAIModelTrainingServicebyAdmin trainingService;
 
     @Autowired
+    private TrainingDataRepository trainingDataRepository;
+
+    @Autowired
     private Validator validator;
+
+    private static final List<String> VALID_CATEGORIES = Arrays.asList(
+            "Sportas", "Ekonomika", "Politika", "Kultūra", "Technologijos", "Sveikata",
+            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika"
+    );
 
     @GetMapping
     public String showTrainingPage(Model model) {
         ArticleCategorizationAIModelTrainingDto dto = new ArticleCategorizationAIModelTrainingDto();
-        // Užtikriname, kad sąrašai nėra null
         if (dto.getTexts() == null) {
             dto.setTexts(new ArrayList<>());
         }
@@ -41,6 +50,7 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
             dto.setLabels(new ArrayList<>());
         }
         model.addAttribute("trainingDto", dto);
+        model.addAttribute("categories", VALID_CATEGORIES);
         return "admin/ai-training";
     }
 
@@ -63,6 +73,7 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
             log.warn("Tušti tekstų arba etikečių sąrašai: tekstai={}, etiketės={}", texts.size(), labels.size());
             model.addAttribute("message", "Klaida: įveskite bent vieną tekstą ir kategoriją.");
             model.addAttribute("messageType", "danger");
+            model.addAttribute("categories", VALID_CATEGORIES);
             ArticleCategorizationAIModelTrainingDto dto = new ArticleCategorizationAIModelTrainingDto();
             dto.setTexts(new ArrayList<>());
             dto.setLabels(new ArrayList<>());
@@ -73,13 +84,29 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
         // Patikriname, ar tekstų ir etikečių skaičius sutampa
         if (texts.size() != labels.size()) {
             log.warn("Tekstų ir etikečių skaičius nesutampa: {} vs {}", texts.size(), labels.size());
-            model.addAttribute("message", "Klaida: tekstų ir etikečių skaičius turi sutapti.");
+            model.addAttribute("message", "Klaida: tekstų ir kategorijų skaičius turi sutapti.");
             model.addAttribute("messageType", "danger");
+            model.addAttribute("categories", VALID_CATEGORIES);
             ArticleCategorizationAIModelTrainingDto dto = new ArticleCategorizationAIModelTrainingDto();
             dto.setTexts(new ArrayList<>());
             dto.setLabels(new ArrayList<>());
             model.addAttribute("trainingDto", dto);
             return "admin/ai-training";
+        }
+
+        // Patikriname, ar kategorijos galiojančios
+        for (String label : labels) {
+            if (!VALID_CATEGORIES.contains(label)) {
+                log.warn("Neteisinga kategorija: {}", label);
+                model.addAttribute("message", "Klaida: neteisinga kategorija: " + label);
+                model.addAttribute("messageType", "danger");
+                model.addAttribute("categories", VALID_CATEGORIES);
+                ArticleCategorizationAIModelTrainingDto dto = new ArticleCategorizationAIModelTrainingDto();
+                dto.setTexts(new ArrayList<>());
+                dto.setLabels(new ArrayList<>());
+                model.addAttribute("trainingDto", dto);
+                return "admin/ai-training";
+            }
         }
 
         // Sukuriame DTO ir priskiriame sąrašus
@@ -100,15 +127,46 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
             log.warn("Validacijos klaidos: {}", result.getAllErrors());
             model.addAttribute("message", "Neteisingi įvesties duomenys. Patikrinkite formą.");
             model.addAttribute("messageType", "danger");
+            model.addAttribute("categories", VALID_CATEGORIES);
             model.addAttribute("trainingDto", dto);
             return "admin/ai-training";
         }
 
-        log.info("Gauta {} tekstų ir {} etikečių", texts.size(), labels.size());
+        // Išsaugome naujus įrašus į article_categorization_training_data
+        for (int i = 0; i < texts.size(); i++) {
+            TrainingData data = new TrainingData();
+            data.setText(texts.get(i));
+            data.setCategory(labels.get(i));
+            trainingDataRepository.save(data);
+            log.info("Išsaugotas įrašas: tekstas='{}...', kategorija='{}'",
+                    texts.get(i).substring(0, Math.min(texts.get(i).length(), 50)), labels.get(i));
+        }
 
+        // Nuskaitome visus įrašus treniravimui
+        List<TrainingData> allData = trainingDataRepository.findAll();
+        List<String> allTexts = new ArrayList<>();
+        List<String> allLabels = new ArrayList<>();
+        for (TrainingData data : allData) {
+            allTexts.add(data.getText());
+            allLabels.add(data.getCategory());
+        }
+
+        // Patikriname, ar yra duomenų treniravimui
+        if (allTexts.isEmpty()) {
+            log.warn("Nėra duomenų treniravimui article_categorization_training_data lentelėje");
+            model.addAttribute("message", "Klaida: nėra treniravimo duomenų.");
+            model.addAttribute("messageType", "danger");
+            model.addAttribute("categories", VALID_CATEGORIES);
+            model.addAttribute("trainingDto", dto);
+            return "admin/ai-training";
+        }
+
+        log.info("Treniruojama su {} tekstais ir {} etiketėmis", allTexts.size(), allLabels.size());
+
+        // Treniruojame modelį
         try {
             long startTime = System.currentTimeMillis();
-            trainingService.trainModel(texts, labels);
+            trainingService.trainModel(allTexts, allLabels);
             log.info("Modelio treniravimas užbaigtas per {} ms", System.currentTimeMillis() - startTime);
             redirectAttributes.addFlashAttribute("message", "Modelio treniravimas sėkmingai užbaigtas.");
             redirectAttributes.addFlashAttribute("messageType", "success");

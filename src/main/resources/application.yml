@@ -27,23 +27,23 @@ server:
 model:
   save:
     path: models/ArticleCategorizationAImodel.zip
-  epochs: 10
+  epochs: 30
   hidden:
     layer:
-      size: 100
+      size: 300
   batch:
-    size: 4
+    size: 16
   available: true
 paragraph:
   vectors:
     save:
-      path: models/paragraph_vectors.zip
-    epochs: 10
+      path: models/Article_categorization_paragraph_vectors.zip
+    epochs: 30
     min:
       word:
         frequency: 1
     layer:
-      size: 100
+      size: 300
     learning:
       rate: 0.025
     window:
