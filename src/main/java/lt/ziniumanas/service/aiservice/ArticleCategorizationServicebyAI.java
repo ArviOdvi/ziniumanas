@@ -1,7 +1,7 @@
 package lt.ziniumanas.service.aiservice;
 
-import ai.djl.modality.Classifications;
-import ai.djl.repository.zoo.ZooModel;
+
+import jakarta.annotation.PostConstruct;
 import lt.ziniumanas.nlp.TextVectorizer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
@@ -26,8 +26,8 @@ import java.util.List;
 @Service
 public class ArticleCategorizationServicebyAI {
     private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
-    private final MultiLayerNetwork model;
-    private final ParagraphVectors paragraphVectors;
+    private MultiLayerNetwork model;
+    private ParagraphVectors paragraphVectors;
     private final List<String> classes = Arrays.asList("Sportas", "Ekonomika", "Politika");
 
     @Value("${model.save.path:models/ArticleCategorizationAImodel.zip}")
@@ -36,56 +36,49 @@ public class ArticleCategorizationServicebyAI {
     @Value("${paragraph.vectors.save.path:models/paragraph_vectors.zip}")
     private String paragraphVectorsSavePath;
 
-    public ArticleCategorizationServicebyAI() {
-        MultiLayerNetwork loadedModel = null;
-        ParagraphVectors loadedParagraphVectors = null;
-
+    @PostConstruct
+    public void init() {
         // Patikriname modelSavePath
         if (modelSavePath == null || modelSavePath.trim().isEmpty()) {
             logger.error("model.save.path nėra nustatytas arba yra tuščias");
-            this.model = null;
-            this.paragraphVectors = null;
-            return;
+            throw new IllegalStateException("model.save.path nėra nustatytas");
         }
 
         // Patikriname paragraphVectorsSavePath
         if (paragraphVectorsSavePath == null || paragraphVectorsSavePath.trim().isEmpty()) {
             logger.error("paragraph.vectors.save.path nėra nustatytas arba yra tuščias");
-            this.model = null;
-            this.paragraphVectors = null;
-            return;
+            throw new IllegalStateException("paragraph.vectors.save.path nėra nustatytas");
         }
 
         // Įkeliame neuroninį tinklą
         File modelFile = new File(modelSavePath);
         if (modelFile.exists() && modelFile.canRead()) {
             try {
-                loadedModel = ModelSerializer.restoreMultiLayerNetwork(modelFile);
+                model = ModelSerializer.restoreMultiLayerNetwork(modelFile);
                 logger.info("Neuroninis tinklas sėkmingai įkeltas iš {}", modelSavePath);
             } catch (IOException e) {
                 logger.error("Klaida įkeliant neuroninį tinklą iš '{}': {}", modelSavePath, e.getMessage(), e);
-            } catch (Exception e) {
-                logger.error("Netikėta klaida įkeliant neuroninį tinklą iš '{}': {}", modelSavePath, e.getMessage(), e);
+                throw new RuntimeException("Nepavyko įkelti neuroninio tinklo", e);
             }
         } else {
-            logger.warn("Neuroninio tinklo failas '{}' nerastas arba neįskaitomas. Reikalingas modelio treniravimas.", modelSavePath);
+            logger.error("Neuroninio tinklo failas '{}' nerastas arba neįskaitomas", modelSavePath);
+            throw new IllegalStateException("Neuroninio tinklo failas nerastas: " + modelSavePath);
         }
 
         // Įkeliame ParagraphVectors
         File pvFile = new File(paragraphVectorsSavePath);
         if (pvFile.exists() && pvFile.canRead()) {
             try {
-                loadedParagraphVectors = TextVectorizer.loadModel(paragraphVectorsSavePath);
+                paragraphVectors = TextVectorizer.loadModel(paragraphVectorsSavePath);
                 logger.info("ParagraphVectors sėkmingai įkeltas iš {}", paragraphVectorsSavePath);
             } catch (Exception e) {
                 logger.error("Klaida įkeliant ParagraphVectors iš '{}': {}", paragraphVectorsSavePath, e.getMessage(), e);
+                throw new RuntimeException("Nepavyko įkelti ParagraphVectors", e);
             }
         } else {
-            logger.warn("ParagraphVectors failas '{}' nerastas arba neįskaitomas. Reikalingas modelio treniravimas.", paragraphVectorsSavePath);
+            logger.error("ParagraphVectors failas '{}' nerastas arba neįskaitomas", paragraphVectorsSavePath);
+            throw new IllegalStateException("ParagraphVectors failas nerastas: " + paragraphVectorsSavePath);
         }
-
-        this.model = loadedModel;
-        this.paragraphVectors = loadedParagraphVectors;
     }
 
     public String categorizeArticle(String text) {

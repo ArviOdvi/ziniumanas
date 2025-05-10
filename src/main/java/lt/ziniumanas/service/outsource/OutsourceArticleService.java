@@ -8,6 +8,7 @@ import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
+import lt.ziniumanas.service.aiservice.ArticleCategorizationServicebyAI;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -35,17 +36,20 @@ public class OutsourceArticleService {
     private final OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
     private final OutsourceArticlePendingUrlService pendingUrlService;
     private final ArticleRepository articleRepository;
+    private final ArticleCategorizationServicebyAI articleCategorizationServicebyAI;
 
     public OutsourceArticleService(
             OutsourceArticlePendingUrlRepository pendingUrlRepository,
             OutsourceArticleScrapingRuleRepository scrapingRuleRepository,
             OutsourceArticlePendingUrlService pendingUrlService,
-            ArticleRepository articleRepository
+            ArticleRepository articleRepository,
+            ArticleCategorizationServicebyAI articleCategorizationServicebyAI
     ) {
         this.pendingUrlRepository = pendingUrlRepository;
         this.scrapingRuleRepository = scrapingRuleRepository;
         this.pendingUrlService = pendingUrlService;
         this.articleRepository = articleRepository;
+        this.articleCategorizationServicebyAI = articleCategorizationServicebyAI;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -60,6 +64,11 @@ public class OutsourceArticleService {
         pendingUrlService.scheduleCollectArticleUrls();
 
         List<OutsourceArticlePendingUrl> pendingUrls = pendingUrlRepository.findAll();
+        if (pendingUrls.isEmpty()) {
+            logger.info("ℹ️ Nėra laukiančių URL apdorojimui.");
+            return;
+        }
+
         for (OutsourceArticlePendingUrl pending : pendingUrls) {
             NewsSource source = pending.getNewsSource();
             List<OutsourceArticleScrapingRule> rules = scrapingRuleRepository.findByNewsSourceId(source.getId());
@@ -80,7 +89,7 @@ public class OutsourceArticleService {
                     }
 
                     String dateString = dateElement.text().trim();
-                    logger.warn("⚠️ TRIMdata '{}' ", dateString);
+                    logger.debug("📅 Datos tekstas: '{}'", dateString);
                     LocalDateTime dateTime = parseDate(dateString);
                     if (dateTime == null) {
                         logger.warn("⚠️ Nepavyko interpretuoti datos '{}' URL: {}", dateString, pending.getUrl());
@@ -95,9 +104,14 @@ public class OutsourceArticleService {
                     }
 
                     String content = extractArticleContent(doc, rule, pending.getUrl());
+                    if (content.isEmpty()) {
+                        logger.warn("⚠️ Turinio išgauti nepavyko URL: {}", pending.getUrl());
+                        continue;
+                    }
 
                     boolean exists = articleRepository.findByArticleNameAndArticleDate(title, date).isPresent();
                     if (!exists) {
+                        String category = articleCategorizationServicebyAI.categorizeArticle(content);
                         Article article = Article.builder()
                                 .articleName(title)
                                 .articleDate(date)
@@ -105,14 +119,16 @@ public class OutsourceArticleService {
                                 .verificationStatus(false)
                                 .contents(content)
                                 .newsSource(source)
-                                .articleCategory("") // Nustatome kategoriją (articleCategorizationServicebyAI.categorizeArticle(content))
+                                .articleCategory(category)
                                 .build();
                         articleRepository.save(article);
-                        logger.info("💾 Išsaugotas straipsnis: {}", title);
+                        logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, category);
+                    } else {
+                        logger.debug("📑 Straipsnis '{}' jau egzistuoja, praleidžiamas", title);
                     }
 
                 } catch (Exception e) {
-                    logger.error("❌ Klaida apdorojant URL '{}': {}", pending.getUrl(), e.getMessage());
+                    logger.error("❌ Klaida apdorojant URL '{}': {}", pending.getUrl(), e.getMessage(), e);
                 }
             }
         }
@@ -126,13 +142,12 @@ public class OutsourceArticleService {
             containerElement = doc.selectFirst(rule.getContentSelector());
             if (containerElement == null) {
                 logger.warn("⚠️ Nerastas turinio konteineris pagal selektorių '{}' URL: {}", rule.getContentSelector(), url);
-                return ""; // Arba galima grąžinti tuščią eilutę, arba nuspręsti kaip elgtis kitaip
+                return "";
             }
         } else {
-            containerElement = doc; // Jei nėra konteinerio selektoriaus, naudojamas visas dokumentas
+            containerElement = doc;
         }
 
-        // Išgauname santrauką
         if (rule.getContentSelectorSummary() != null && !rule.getContentSelectorSummary().isEmpty()) {
             Element summaryElement = containerElement.selectFirst(rule.getContentSelectorSummary());
             if (summaryElement != null) {
@@ -142,7 +157,6 @@ public class OutsourceArticleService {
             }
         }
 
-        // Išgauname pastraipas
         if (rule.getContentSelectorParagraphs() != null && !rule.getContentSelectorParagraphs().isEmpty()) {
             Elements paragraphElements = containerElement.select(rule.getContentSelectorParagraphs());
             if (paragraphElements != null && !paragraphElements.isEmpty()) {
@@ -150,8 +164,8 @@ public class OutsourceArticleService {
                     contentBuilder.append(paragraph.text().trim()).append("\n\n");
                 }
             } else {
-                    logger.warn("⚠️ Nerasta straipsnio pastraipos pagal selektorių '{}' URL: {}", rule.getContentSelectorParagraphs(), url);
-                }
+                logger.warn("⚠️ Nerasta straipsnio pastraipos pagal selektorių '{}' URL: {}", rule.getContentSelectorParagraphs(), url);
+            }
         }
         return contentBuilder.toString().trim();
     }
@@ -160,12 +174,14 @@ public class OutsourceArticleService {
         List<String> patterns = List.of(
                 "yyyy.MM.dd HH:mm",
                 "yyyy.MM.dd  HH:mm",
-                " yyyy.MM.dd HH:mm ",
                 "yyyy.MM.ddHH:mm",
                 "yyyy MM dd / HH:mm",
                 "yyyy-MM-dd HH:mm",
                 "yyyy/MM/dd HH:mm",
-                "yyyy-MM-dd HH:mm:ss"
+                "yyyy-MM-dd HH:mm:ss",
+                "dd MMMM yyyy HH:mm",
+                "dd MMM yyyy HH:mm",
+                "yyyy MMMM dd"
         );
 
         for (String pattern : patterns) {
