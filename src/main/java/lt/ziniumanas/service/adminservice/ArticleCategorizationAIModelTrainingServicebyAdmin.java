@@ -18,6 +18,7 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.dataset.api.preprocessor.DataNormalization;
 import org.nd4j.linalg.dataset.api.preprocessor.NormalizerMinMaxScaler;
 import org.nd4j.linalg.factory.Nd4j;
+import org.nd4j.linalg.indexing.NDArrayIndex;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
 import org.slf4j.Logger;
@@ -44,10 +45,10 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     @Value("${model.hidden.layer.size:100}")
     private int hiddenLayerSize;
 
-    @Value("${model.batch.size:32}")
+    @Value("${model.batch.size:4}")
     private int batchSize;
 
-    @Value("${paragraph.vectors.min.word.frequency:5}")
+    @Value("${paragraph.vectors.min.word.frequency:1}")
     private int minWordFrequency;
 
     @Value("${paragraph.vectors.layer.size:100}")
@@ -87,18 +88,26 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         log.info("Gauta {} tekstų ir {} etikečių. Pirmasis tekstas: '{}', pirmoji etiketė: '{}'",
                 texts.size(), labels.size(), texts.get(0), labels.get(0));
 
-        for (String text : texts) {
-            if (text == null || text.trim().isEmpty()) {
-                throw new IllegalArgumentException("Tekstas negali būti tuščias arba null");
+        // Pašaliname tuščius tekstus
+        List<String> validTexts = new ArrayList<>();
+        List<String> validLabels = new ArrayList<>();
+        for (int i = 0; i < texts.size(); i++) {
+            if (texts.get(i) != null && !texts.get(i).trim().isEmpty()) {
+                validTexts.add(texts.get(i));
+                validLabels.add(labels.get(i));
+            } else {
+                log.warn("Praleistas tuščias tekstas indeksu {}", i);
             }
         }
-
-        log.info("Treniruojama su {} tekstais ir {} unikaliomis etiketėmis", texts.size(), new HashSet<>(labels).size());
+        if (validTexts.isEmpty()) {
+            throw new IllegalArgumentException("Nėra galiojančių tekstų treniravimui");
+        }
+        log.info("Galiojančių tekstų: {}, etikečių: {}", validTexts.size(), validLabels.size());
 
         // Sukuriame tekstų ir etikečių žemėlapį
         Map<String, String> textsWithLabels = new HashMap<>();
-        for (int i = 0; i < texts.size(); i++) {
-            textsWithLabels.put(labels.get(i) + "_" + i, texts.get(i));
+        for (int i = 0; i < validTexts.size(); i++) {
+            textsWithLabels.put(validLabels.get(i) + "_" + i, validTexts.get(i));
         }
 
         // Tikriname, ar ParagraphVectors modelis jau egzistuoja
@@ -121,7 +130,8 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         // Vektorizuojame tekstus
         INDArray features;
         try {
-            features = TextVectorizer.vectorize(texts, paragraphVectors);
+            features = TextVectorizer.vectorize(validTexts, paragraphVectors);
+            log.info("Vektorizacijos rezultatas: {} eilučių, {} stulpelių", features.rows(), features.columns());
         } catch (Exception e) {
             log.error("Nepavyko vektorizuoti tekstų: {}", e.getMessage());
             throw new RuntimeException("Tekstų vektorizacijos klaida", e);
@@ -133,15 +143,23 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         normalizer.transform(features);
 
         // Paverčiame etiketes į one-hot formatą
-        List<String> uniqueLabels = new ArrayList<>(new HashSet<>(labels));
+        List<String> uniqueLabels = new ArrayList<>(new HashSet<>(validLabels));
         Map<String, Integer> labelMap = new HashMap<>();
         for (int i = 0; i < uniqueLabels.size(); i++) {
             labelMap.put(uniqueLabels.get(i), i);
         }
 
-        INDArray target = Nd4j.zeros(labels.size(), uniqueLabels.size());
-        for (int i = 0; i < labels.size(); i++) {
-            target.putScalar(i, labelMap.get(labels.get(i)), 1.0);
+        INDArray target = Nd4j.zeros(validTexts.size(), uniqueLabels.size());
+        for (int i = 0; i < validTexts.size(); i++) {
+            target.putScalar(i, labelMap.get(validLabels.get(i)), 1.0);
+        }
+
+        // Patikriname dimensijas
+        log.info("Features: {} eilučių, {} stulpelių; Target: {} eilučių, {} stulpelių",
+                features.rows(), features.columns(), target.rows(), target.columns());
+        if (features.rows() != target.rows()) {
+            throw new IllegalStateException("Features ir Target eilučių skaičius nesutampa: " +
+                    features.rows() + " vs " + target.rows());
         }
 
         // Sukuriame modelį
@@ -153,16 +171,19 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         // Treniruojame modelį per epochas
         long startTime = System.currentTimeMillis();
         for (int epoch = 0; epoch < epochs; epoch++) {
-            // Padalijame duomenis į mini-partijas rankiniu būdu
-            for (int i = 0; i < fullDataSet.numExamples(); i += batchSize) {
-                int endIndex = Math.min(i + batchSize, fullDataSet.numExamples());
-                INDArray batchFeatures = features.getRows(i, endIndex);
-                INDArray batchLabels = target.getRows(i, endIndex);
+            // Padalijame duomenis į mini-partijas
+            int numExamples = fullDataSet.numExamples();
+            for (int i = 0; i < numExamples; i += batchSize) {
+                int endIndex = Math.min(i + batchSize, numExamples);
+                // Iškerpame mini-partiją
+                INDArray batchFeatures = features.get(NDArrayIndex.interval(i, endIndex), NDArrayIndex.all());
+                INDArray batchLabels = target.get(NDArrayIndex.interval(i, endIndex), NDArrayIndex.all());
                 DataSet batch = new DataSet(batchFeatures, batchLabels);
                 try {
                     model.fit(batch);
+                    log.debug("Treniruota mini-partija {}-{}", i, endIndex);
                 } catch (Exception e) {
-                    log.error("Klaida treniruojant mini-partiją {}-{} epochoje {}: {}", i, endIndex, epoch + 1, e.getMessage());
+                    log.error("Klaida treniruojant mini-partiją {}-{} epochoje {}: {}", i, endIndex, epoch + 1, e.getMessage(), e);
                     throw new RuntimeException("Treniravimo klaida mini-partijoje", e);
                 }
             }
