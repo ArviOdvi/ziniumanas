@@ -26,30 +26,11 @@ server:
       enabled: false
 model:
   save:
-    path: models/ArticleCategorizationAImodel.zip
-  epochs: 30
-  hidden:
-    layer:
-      size: 300
-  batch:
-    size: 16
-  available: true
-paragraph:
-  vectors:
-    save:
-      path: models/Article_categorization_paragraph_vectors.zip
-    epochs: 30
-    min:
-      word:
-        frequency: 1
-    layer:
-      size: 300
-    learning:
-      rate: 0.025
-    window:
-      size: 5
+    path: models/bert_classifier
+  epochs: 5
+  learning:
+    rate: 0.0001
 logging:
   level:
     lt.ziniumanas: DEBUG
-    org.deeplearning4j: INFO
-    org.nd4j: INFO
+    ai.djl: INFO

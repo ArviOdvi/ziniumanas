@@ -6,6 +6,8 @@ import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.model.aimodel.TrainingData;
 import lt.ziniumanas.repository.airepository.TrainingDataRepository;
 import lt.ziniumanas.service.adminservice.ArticleCategorizationAIModelTrainingServicebyAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -24,21 +26,27 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin/ai-training")
-@Slf4j
 public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
-    @Autowired
-    private ArticleCategorizationAIModelTrainingServicebyAdmin trainingService;
-
-    @Autowired
-    private TrainingDataRepository trainingDataRepository;
-
-    @Autowired
-    private Validator validator;
+    private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingControllerbyAdmin.class);
 
     private static final List<String> VALID_CATEGORIES = Arrays.asList(
             "Sportas", "Ekonomika", "Politika", "Kultūra", "Technologijos", "Sveikata",
-            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika"
+            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika", "Maistas"
     );
+
+    private final ArticleCategorizationAIModelTrainingServicebyAdmin trainingService;
+    private final TrainingDataRepository trainingDataRepository;
+    private final Validator validator;
+
+    @Autowired
+    public ArticleCategorizationAIModelTrainingControllerbyAdmin(
+            ArticleCategorizationAIModelTrainingServicebyAdmin trainingService,
+            TrainingDataRepository trainingDataRepository,
+            Validator validator) {
+        this.trainingService = trainingService;
+        this.trainingDataRepository = trainingDataRepository;
+        this.validator = validator;
+    }
 
     @GetMapping
     public String showTrainingPage(Model model) {
@@ -142,36 +150,15 @@ public class ArticleCategorizationAIModelTrainingControllerbyAdmin {
                     texts.get(i).substring(0, Math.min(texts.get(i).length(), 50)), labels.get(i));
         }
 
-        // Nuskaitome visus įrašus treniravimui
-        List<TrainingData> allData = trainingDataRepository.findAll();
-        List<String> allTexts = new ArrayList<>();
-        List<String> allLabels = new ArrayList<>();
-        for (TrainingData data : allData) {
-            allTexts.add(data.getText());
-            allLabels.add(data.getCategory());
-        }
-
-        // Patikriname, ar yra duomenų treniravimui
-        if (allTexts.isEmpty()) {
-            log.warn("Nėra duomenų treniravimui article_categorization_training_data lentelėje");
-            model.addAttribute("message", "Klaida: nėra treniravimo duomenų.");
-            model.addAttribute("messageType", "danger");
-            model.addAttribute("categories", VALID_CATEGORIES);
-            model.addAttribute("trainingDto", dto);
-            return "admin/ai-training";
-        }
-
-        log.info("Treniruojama su {} tekstais ir {} etiketėmis", allTexts.size(), allLabels.size());
-
         // Treniruojame modelį
         try {
             long startTime = System.currentTimeMillis();
-            trainingService.trainModel(allTexts, allLabels);
+            trainingService.trainModel();
             log.info("Modelio treniravimas užbaigtas per {} ms", System.currentTimeMillis() - startTime);
             redirectAttributes.addFlashAttribute("message", "Modelio treniravimas sėkmingai užbaigtas.");
             redirectAttributes.addFlashAttribute("messageType", "success");
-        } catch (IllegalArgumentException e) {
-            log.error("Neteisingi įvesties duomenys: {}", e.getMessage(), e);
+        } catch (IllegalStateException e) {
+            log.error("Neteisingi treniravimo duomenys: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("message", "Klaida: " + e.getMessage());
             redirectAttributes.addFlashAttribute("messageType", "danger");
         } catch (Exception e) {

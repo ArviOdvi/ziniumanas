@@ -6,13 +6,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequestMapping("/admin")
-public class AdminController {
-    @GetMapping("/articles")
-    public String showArticlesAdmin(Model model) {
-        model.addAttribute("title", "Straipsnių Valdymas");
-        model.addAttribute("content", "admin/articles :: main"); // Nurodome fragmentą iš articles.html
-        return "admin/layout";
-    }
+public class AdminScrapingRuleController {
 
     @GetMapping("/scraping-rules")
     public String showScrapingRulesAdmin(Model model) {
