@@ -13,6 +13,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -21,10 +24,10 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
     private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingServicebyAdmin.class);
     private static final List<String> CLASSES = Arrays.asList(
             "Sportas", "Ekonomika", "Politika", "Kultūra", "Technologijos", "Sveikata",
-            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika", "Maistas"
+            "Mokslas", "Istorija", "Pasaulyje", "Lietuvoje", "Vaikams", "Muzika", "Maistas", "Laisvalaikis"
     );
 
-    @Value("${model.save.path:models/bert_classifier}")
+    @Value("${model.save.path:C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-bert}")
     private String modelSavePath;
 
     @Value("${model.epochs:5}")
@@ -32,6 +35,9 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
 
     @Value("${model.learning.rate:0.0001}")
     private float learningRate;
+
+    @Value("${python.executable:python}")
+    private String pythonExecutable;
 
     private final TrainingDataRepository trainingDataRepository;
     private final TextClassifier classifier;
@@ -58,7 +64,7 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
                 .collect(Collectors.toMap(
                         TrainingData::getText,
                         TrainingData::getCategory,
-                        (existing, replacement) -> existing, // Ignoruoti dublikatus
+                        (existing, replacement) -> existing,
                         LinkedHashMap::new
                 ));
 
@@ -71,7 +77,7 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
 
         try {
             long start = System.currentTimeMillis();
-            classifier.trainModel(textsWithLabels, modelSavePath, epochs, learningRate);
+            runPythonTrainingScript(textsWithLabels);
             log.info("Modelis ištreniruotas per {} ms", System.currentTimeMillis() - start);
         } catch (Exception e) {
             log.error("Klaida treniruojant modelį: {}", e.getMessage(), e);
@@ -130,7 +136,7 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
             log.info("Išsaugota {} naujų treniravimo įrašų", newData.size());
 
             long startTime = System.currentTimeMillis();
-            classifier.trainModel(textsWithLabels, modelSavePath, epochs, learningRate);
+            runPythonTrainingScript(textsWithLabels);
             log.info("Modelis ištreniruotas per {} ms", System.currentTimeMillis() - startTime);
         } catch (Exception e) {
             log.error("Klaida treniruojant modelį: {}", e.getMessage(), e);
@@ -138,15 +144,60 @@ public class ArticleCategorizationAIModelTrainingServicebyAdmin {
         }
     }
 
+    private void runPythonTrainingScript(Map<String, String> textsWithLabels) throws IOException, InterruptedException {
+        // Sukurti laikiną CSV failą treniravimo duomenims
+        File tempCsvFile = File.createTempFile("training_data", ".csv");
+        try (FileWriter writer = new FileWriter(tempCsvFile)) {
+            writer.write("text,category\n");
+            for (Map.Entry<String, String> entry : textsWithLabels.entrySet()) {
+                String text = entry.getKey().replace("\"", "\"\""); // Escapiname kabutes
+                writer.write(String.format("\"%s\",\"%s\"\n", text, entry.getValue()));
+            }
+        }
+
+        // Python skripto kelias
+        String pythonScriptPath = "C:/Users/Admin/IdeaProjects/Ziniumanas/models/train_model.py";
+
+        // Sukurti komandą Python skriptui paleisti
+        ProcessBuilder pb = new ProcessBuilder(
+                pythonExecutable,
+                pythonScriptPath,
+                "--data_path", tempCsvFile.getAbsolutePath(),
+                "--model_save_path", modelSavePath,
+                "--epochs", String.valueOf(epochs),
+                "--learning_rate", String.valueOf(learningRate)
+        );
+
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+
+        // Nuskaityti Python skripto išvestį
+        StringBuilder output = new StringBuilder();
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(process.getInputStream()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                output.append(line).append("\n");
+            }
+        }
+
+        int exitCode = process.waitFor();
+        tempCsvFile.delete();
+
+        if (exitCode != 0) {
+            log.error("Python skripto klaida: {}\nIšvestis: {}", exitCode, output);
+            throw new RuntimeException("Python skripto vykdymo klaida: " + output);
+        } else {
+            log.info("Python skriptas sėkmingai įvykdytas. Išvestis: {}", output);
+        }
+    }
+
     private String preprocessText(String text) {
         if (text == null) return "";
-        // Pašalinti HTML žymes, specialiuosius simbolius, normalizuoti
-        text = text.replaceAll("<[^>]+>", "") // Pašalina HTML
-                .replaceAll("[^a-zA-Z0-9\\s]", " ") // Pašalina specialiuosius simbolius
+        text = text.replaceAll("<[^>]+>", "")
+                .replaceAll("[^a-zA-Z0-9\\s]", " ")
                 .toLowerCase()
                 .trim();
-        // Apriboti ilgį iki 500 simbolių (saugus distilbert žetonų limitокурашіптуваннямізуванння
-        // Apriboti ilgį iki 500 simbolių (saugus distilbert žetonų limitas)
         return text.length() > 500 ? text.substring(0, 500) : text;
     }
 

@@ -24,13 +24,25 @@ server:
   error:
     whitelabel:
       enabled: false
+  jetty:
+    accesslog:
+      ignore-paths:
 model:
   save:
-    path: models/bert_classifier
+    path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
   epochs: 5
   learning:
     rate: 0.0001
 logging:
   level:
+    org.springframework: DEBUG
     lt.ziniumanas: DEBUG
-    ai.djl: INFO
+    ai.djl: DEBUG
+ai:
+  djl:
+    default_engine: PyTorch
+nlp:
+  model:
+    path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
+    name: custom-distilbert
+    file: custom-bert.pt
