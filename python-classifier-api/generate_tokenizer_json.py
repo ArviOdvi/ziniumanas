@@ -49,5 +49,5 @@ def generate_tokenizer_json(model_path: str):
         raise
 
 if __name__ == "__main__":
-    model_path = "C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert"
+    model_path = "/python-classifier-api/model/custom-distilbert"
     generate_tokenizer_json(model_path)

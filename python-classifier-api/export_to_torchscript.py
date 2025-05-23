@@ -2,7 +2,7 @@ import os
 import torch
 from transformers import DistilBertForSequenceClassification, DistilBertTokenizer
 
-model_path = "C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert"
+model_path = "/python-classifier-api/model/custom-distilbert"
 output_path = os.path.join(model_path, "custom-bert.pt")
 
 class TraceableModel(torch.nn.Module):

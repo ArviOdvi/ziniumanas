@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   mano-spring-app:
     build: .
@@ -12,7 +11,8 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
     depends_on:
       - postgres
-
+    volumes:
+      - C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert:/app/models
   postgres:
     image: postgres:13
     container_name: newsman_postgres
@@ -24,6 +24,5 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
 volumes:
   postgres_data:

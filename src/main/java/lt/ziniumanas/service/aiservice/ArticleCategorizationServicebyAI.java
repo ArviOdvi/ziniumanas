@@ -12,32 +12,45 @@ import java.util.List;
 
 @Service
 public class ArticleCategorizationServicebyAI {
+    private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
 
-        private static final String modelPath = "src/main/resources/models/text_classifier_model.h5";
-        private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
+    private final TextClassifier textClassifier;
 
-        private final TextClassifier textClassifier; // Naudojame TextClassifier
+    @Autowired
+    public ArticleCategorizationServicebyAI(TextClassifier textClassifier) {
+        this.textClassifier = textClassifier;
+    }
 
-        @Autowired // Įpurškiame TextClassifier per konstruktorių
-        public ArticleCategorizationServicebyAI(TextClassifier textClassifier) {
-            this.textClassifier = textClassifier;
+    public String categorizeArticle(String articleText) {
+        if (articleText == null || articleText.trim().isEmpty()) {
+            logger.warn("Tuščias straipsnio tekstas, grąžinama numatytoji kategorija");
+            return "Nežinoma";
         }
-        public String categorizeArticle(String articleText) {
-            if (articleText == null || articleText.trim().isEmpty()) {
-                logger.warn("Tuščias straipsnio tekstas, grąžinama numatytoji kategorija");
+
+        try {
+            // Klasifikacija naudojant TextClassifier
+            List<String> inputTexts = List.of(articleText); // Supakuojame į List
+            List<Classifications> results = textClassifier.classify(inputTexts);
+
+            if (results.isEmpty()) {
+                logger.warn("Klasifikacijos rezultatai tušti, grąžinama numatytoji kategorija");
                 return "Nežinoma";
             }
 
-            // Klasifikacija naudojant TextClassifier
-            List<String> inputTexts = List.of(articleText); // Supakuojame į List, kaip reikalauja classify
-            String category = textClassifier.classify(inputTexts);
+            // Gauname geriausią kategoriją iš pirmojo Classifications objekto
+            Classifications classification = results.get(0);
+            String category = classification.best().getClassName();
             logger.info("Straipsnis kategorizuotas kaip: {}", category);
             return category;
-        }
-
-        @PreDestroy
-        public void close() {
-            // Nebereikia rūpintis modelio ir predictor uždarymu, tai daro TextClassifier
-            logger.info("ArticleCategorizationServicebyAI ruošiasi uždarymui");
+        } catch (Exception e) {
+            logger.error("Klaida kategorizuojant straipsnį: {}", e.getMessage(), e);
+            return "Nežinoma";
         }
     }
+
+    @PreDestroy
+    public void close() {
+        // TextClassifier tvarko modelio ir predictor uždarymą
+        logger.info("ArticleCategorizationServicebyAI ruošiasi uždarymui");
+    }
+}

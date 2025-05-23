@@ -5,6 +5,7 @@ import ai.djl.huggingface.tokenizers.HuggingFaceTokenizer;
 import ai.djl.modality.Classifications;
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
+import ai.djl.ndarray.types.DataType;
 import ai.djl.ndarray.types.Shape;
 import ai.djl.translate.Translator;
 import ai.djl.translate.TranslatorContext;
@@ -21,81 +22,94 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class TextClassificationTranslator implements Translator<String, Classifications>, Serializable {
+public class TextClassificationTranslator implements Translator<String, Classifications>, AutoCloseable {
     private static final Logger logger = LoggerFactory.getLogger(TextClassificationTranslator.class);
     private final HuggingFaceTokenizer tokenizer;
     private final List<String> classes;
-    private static final int MAX_LENGTH = 128;
+    private final int maxLength;
 
     public TextClassificationTranslator(List<String> classes, NlpModelProperties properties) {
         this.classes = classes;
+        this.maxLength = properties.getMaxLength();
         try {
             Path tokenizerPath = Path.of(properties.getPath());
-
-            if (!Files.exists(tokenizerPath)) {
-                throw new IOException("Tokenizerio katalogas nerastas: " + tokenizerPath);
-            }
-
-            List<String> requiredFiles = Arrays.asList("vocab.txt", "tokenizer_config.json", "special_tokens_map.json");
-            for (String file : requiredFiles) {
-                if (!Files.exists(tokenizerPath.resolve(file))) {
-                    throw new IOException("Trūksta tokenizerio failo: " + file);
-                }
+            if (!Files.exists(tokenizerPath) || !Files.isDirectory(tokenizerPath)) {
+                throw new IOException("Tokenizerio katalogas nerastas arba netinkamas: " + tokenizerPath);
             }
 
             this.tokenizer = HuggingFaceTokenizer.newInstance(
-                    tokenizerPath,
+                    "distilbert-base-multilingual-cased",
                     Map.of(
-                            "maxLength", String.valueOf(MAX_LENGTH),
+                            "path", properties.getPath(),
+                            "maxLength", String.valueOf(maxLength),
                             "doLowerCase", "false",
                             "padding", "max_length",
-                            "truncation", "true",
-                            "tokenizerType", "slow"
+                            "truncation", "true"
                     )
             );
+            logger.info("DistilBERT tokenizeris įkeltas iš {}", tokenizerPath);
         } catch (IOException e) {
-            logger.error("Nepavyko įkelti tokenizerio", e);
+            logger.error("Nepavyko įkelti tokenizerio iš {}: {}", properties.getPath(), e.getMessage(), e);
             throw new RuntimeException("Tokenizerio įkėlimo klaida", e);
         }
     }
 
     @Override
     public NDList processInput(TranslatorContext ctx, String input) {
-        Encoding encoding = tokenizer.encode(input);
-        long[] ids = encoding.getIds();
-        long[] attentionMask = encoding.getAttentionMask();
+        if (input == null || input.trim().isEmpty()) {
+            logger.error("Įvestis negali būti null arba tuščia: {}", input);
+            throw new IllegalArgumentException("Įvestis negali būti null arba tuščia");
+        }
+        try {
+            Encoding encoding = tokenizer.encode(input);
+            NDArray inputIdsArray = ctx.getNDManager()
+                    .create(encoding.getIds(), new Shape(1, maxLength))
+                    .toType(DataType.INT32, false);
+            NDArray attentionMaskArray = ctx.getNDManager()
+                    .create(encoding.getAttentionMask(), new Shape(1, maxLength))
+                    .toType(DataType.FLOAT32, false);
 
-        long[] paddedIds = new long[MAX_LENGTH];
-        long[] paddedAttentionMask = new long[MAX_LENGTH];
-        int len = Math.min(ids.length, MAX_LENGTH);
-        System.arraycopy(ids, 0, paddedIds, 0, len);
-        System.arraycopy(attentionMask, 0, paddedAttentionMask, 0, len);
+            inputIdsArray.setName("input_ids");
+            attentionMaskArray.setName("attention_mask");
 
-        NDArray inputIdsArray = ctx.getNDManager().create(paddedIds, new Shape(1, MAX_LENGTH));
-        NDArray attentionMaskArray = ctx.getNDManager().create(paddedAttentionMask, new Shape(1, MAX_LENGTH));
-        inputIdsArray.setName("input_ids");
-        attentionMaskArray.setName("attention_mask");
+            logger.debug("Input text: {}", input);
+            logger.debug("Input IDs shape: {}, first 10 tokens: {}",
+                    inputIdsArray.getShape(),
+                    Arrays.toString(Arrays.copyOf(encoding.getIds(), Math.min(10, encoding.getIds().length))));
+            logger.debug("Attention Mask shape: {}, first 10 values: {}",
+                    attentionMaskArray.getShape(),
+                    Arrays.toString(Arrays.copyOf(encoding.getAttentionMask(), Math.min(10, encoding.getAttentionMask().length))));
 
-        return new NDList(inputIdsArray, attentionMaskArray);
+            return new NDList(inputIdsArray, attentionMaskArray);
+        } catch (Exception e) {
+            logger.error("Klaida apdorojant įvestį '{}': {}", input, e.getMessage(), e);
+            throw new RuntimeException("Nepavyko apdoroti įvesties", e);
+        }
     }
 
     @Override
     public Classifications processOutput(TranslatorContext ctx, NDList logits) {
-        float[] logitsData = logits.singletonOrThrow().toFloatArray();
-
-        // Softmax skaičiavimas
-        double[] expValues = new double[logitsData.length];
-        double sum = 0.0;
-        for (int i = 0; i < logitsData.length; i++) {
-            expValues[i] = Math.exp(logitsData[i]);
-            sum += expValues[i];
+        try {
+            NDArray logitsArray = logits.singletonOrThrow();
+            logger.debug("Logits shape: {}, values: {}",
+                    logitsArray.getShape(),
+                    Arrays.toString(logitsArray.toFloatArray()));
+            NDArray probsArray = logitsArray.softmax(-1);
+            logger.debug("Probabilities shape: {}, values: {}",
+                    probsArray.getShape(),
+                    Arrays.toString(probsArray.toFloatArray()));
+            return new Classifications(classes, probsArray);
+        } catch (Exception e) {
+            logger.error("Klaida apdorojant modelio išvestį: {}", e.getMessage(), e);
+            throw new RuntimeException("Nepavyko apdoroti išvesties", e);
         }
+    }
 
-        List<Double> probs = new ArrayList<>();
-        for (double val : expValues) {
-            probs.add(val / sum);
+    @Override
+    public void close() {
+        if (tokenizer != null) {
+            tokenizer.close();
+            logger.info("DistilBERT tokenizeris uždarytas");
         }
-
-        return new Classifications(classes, probs);
     }
 }

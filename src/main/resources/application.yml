@@ -11,6 +11,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+      dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     properties:
       hibernate:
@@ -20,19 +21,16 @@ spring:
   thymeleaf:
     cache: false
 server:
-  port: 8081
+  port: 8080
   error:
     whitelabel:
       enabled: false
-  jetty:
-    accesslog:
-      ignore-paths:
 model:
   save:
     path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
   epochs: 5
   learning:
-    rate: 0.0001
+      rate: 0.0001
 logging:
   level:
     org.springframework: DEBUG
@@ -44,5 +42,8 @@ ai:
 nlp:
   model:
     path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
-    name: custom-distilbert
     file: custom-bert.pt
+    name: distilbert-base-multilingual-cased
+    maxlength: 256
+    epochs: 5
+    learning-rate: 0.0001

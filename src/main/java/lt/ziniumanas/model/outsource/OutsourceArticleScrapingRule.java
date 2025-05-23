@@ -5,7 +5,7 @@ import lombok.*;
 import lt.ziniumanas.model.NewsSource;
 
 @Entity
-@Table(name = "scraping_rules")
+@Table(name = "scraping_rule")
 @Getter
 @Setter
 @Builder
