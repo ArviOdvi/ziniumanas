@@ -20,25 +20,29 @@ spring:
     open-in-view: false
   thymeleaf:
     cache: false
+
 server:
   port: 8080
   error:
     whitelabel:
       enabled: false
+
 model:
   save:
     path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
   epochs: 5
-  learning:
-      rate: 0.0001
+  learning-rate: 0.0001
+
 logging:
   level:
     org.springframework: DEBUG
     lt.ziniumanas: DEBUG
     ai.djl: DEBUG
+
 ai:
   djl:
     default_engine: PyTorch
+
 nlp:
   model:
     path: C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert
@@ -47,3 +51,7 @@ nlp:
     maxlength: 256
     epochs: 5
     learning-rate: 0.0001
+
+classification:
+  api:
+    url: http://localhost:5000/predict

@@ -1,24 +1,42 @@
 package lt.ziniumanas.service.aiservice;
-import ai.djl.modality.Classifications;
-import ai.djl.repository.zoo.ZooModel;
-import lt.ziniumanas.nlp.TextClassifier;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lt.ziniumanas.config.ClassificationApiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import javax.annotation.PreDestroy;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lt.ziniumanas.config.ClassificationApiProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
-import java.util.List;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 
 @Service
 public class ArticleCategorizationServicebyAI {
     private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
 
-    private final TextClassifier textClassifier;
+    private final ObjectMapper objectMapper;
+    private final ClassificationApiProperties classificationApiProperties;
 
-    @Autowired
-    public ArticleCategorizationServicebyAI(TextClassifier textClassifier) {
-        this.textClassifier = textClassifier;
+    public ArticleCategorizationServicebyAI(ObjectMapper objectMapper,
+                                            ClassificationApiProperties classificationApiProperties) {
+        this.objectMapper = objectMapper;
+        this.classificationApiProperties = classificationApiProperties;
     }
 
     public String categorizeArticle(String articleText) {
@@ -28,29 +46,52 @@ public class ArticleCategorizationServicebyAI {
         }
 
         try {
-            // Klasifikacija naudojant TextClassifier
-            List<String> inputTexts = List.of(articleText); // Supakuojame į List
-            List<Classifications> results = textClassifier.classify(inputTexts);
+            // JSON objektas
+            String jsonRequest = objectMapper.writeValueAsString(new TextRequest(articleText));
 
-            if (results.isEmpty()) {
-                logger.warn("Klasifikacijos rezultatai tušti, grąžinama numatytoji kategorija");
-                return "Nežinoma";
+            // URL paimtas is properties
+            URL url = new URL(classificationApiProperties.getUrl());
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setDoOutput(true);
+
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonRequest.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
             }
 
-            // Gauname geriausią kategoriją iš pirmojo Classifications objekto
-            Classifications classification = results.get(0);
-            String category = classification.best().getClassName();
+            JsonNode responseJson = objectMapper.readTree(connection.getInputStream());
+            String category = responseJson.has("label") ? responseJson.get("label").asText() : "Nežinoma";
+
             logger.info("Straipsnis kategorizuotas kaip: {}", category);
             return category;
+
         } catch (Exception e) {
-            logger.error("Klaida kategorizuojant straipsnį: {}", e.getMessage(), e);
+            logger.error("Klaida jungiantis prie Python klasifikatoriaus: {}", e.getMessage(), e);
             return "Nežinoma";
         }
     }
 
     @PreDestroy
     public void close() {
-        // TextClassifier tvarko modelio ir predictor uždarymą
         logger.info("ArticleCategorizationServicebyAI ruošiasi uždarymui");
+    }
+
+    static class TextRequest {
+        public String text;
+
+        public TextRequest(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
     }
 }

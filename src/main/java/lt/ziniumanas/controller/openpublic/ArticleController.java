@@ -11,7 +11,7 @@ import java.util.List;
 
 //Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
 @Controller
-public class ArticleController {
+public class  ArticleController {
     private final ArticleRepository articleRepository;
 
     public ArticleController(ArticleRepository articleRepository) {

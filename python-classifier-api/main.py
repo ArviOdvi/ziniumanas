@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+import torch.nn.functional as F
 import os
 
 # --- Konfigūracija ---
@@ -22,17 +23,27 @@ app = FastAPI()
 class TextRequest(BaseModel):
     text: str
 
-# --- Klasifikavimo funkcija ---
+# --- Klasifikavimo API ---
 @app.post("/predict")
 def predict(request: TextRequest):
-    inputs = tokenizer(request.text, return_tensors="pt", padding=True, truncation=True, max_length=256)
+    try:
+        inputs = tokenizer(
+            request.text,
+            return_tensors="pt",
+            padding="max_length",
+            truncation=True,
+            max_length=256
+        )
+        with torch.no_grad():
+            outputs = model(**inputs)
+            probs = F.softmax(outputs.logits, dim=-1)
+            pred_label_id = torch.argmax(probs, dim=1).item()
 
-    with torch.no_grad():
-        outputs = model(**inputs)
-        probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        id2label = model.config.id2label
         pred_label_id = torch.argmax(probs, dim=1).item()
+        label = model.config.id2label.get(pred_label_id, "Nežinoma")
+        confidence = round(probs[0][pred_label_id].item(), 3)
 
-    # Gauti žmogišką kategoriją
-    label = model.config.id2label[str(pred_label_id)]
-
-    return {"label": label, "confidence": round(probs[0][pred_label_id].item(), 3)}
+        return {"label": label, "confidence": confidence}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Klaida klasifikuojant tekstą: {str(e)}")
