@@ -1,5 +1,5 @@
 package lt.ziniumanas.controller.admin;
-import lt.ziniumanas.service.aiservice.ArticleCategorizationServicebyAI;
+import lt.ziniumanas.service.ai_service.ArticleCategorizationServicebyAI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 @RestController

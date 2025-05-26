@@ -1,10 +1,9 @@
-package lt.ziniumanas.service.aiservice;
+package lt.ziniumanas.service.ai_service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.ziniumanas.config.ClassificationApiProperties;
 import org.springframework.stereotype.Service;
-import org.springframework.stereotype.Component;
 
 import java.io.OutputStream;
 import java.net.HttpURLConnection;

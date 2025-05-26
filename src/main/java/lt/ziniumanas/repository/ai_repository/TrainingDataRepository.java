@@ -1,4 +1,4 @@
-package lt.ziniumanas.repository.airepository;
+package lt.ziniumanas.repository.ai_repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import lt.ziniumanas.model.aimodel.TrainingData;

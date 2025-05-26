@@ -8,7 +8,7 @@ import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
-import lt.ziniumanas.service.aiservice.ArticleCategorizationServicebyAI;
+import lt.ziniumanas.service.ai_service.ArticleCategorizationServicebyAI;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;

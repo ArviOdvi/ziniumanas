@@ -1,24 +1,12 @@
-package lt.ziniumanas.service.aiservice;
+package lt.ziniumanas.service.ai_service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.ziniumanas.config.ClassificationApiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PreDestroy;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.ziniumanas.config.ClassificationApiProperties;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 import javax.annotation.PreDestroy;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
