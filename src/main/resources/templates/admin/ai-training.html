@@ -9,7 +9,10 @@
 <div class="container mt-5">
   <h1 class="text-center mb-4">AI Modelio Treniravimas</h1>
   <p class="text-center mb-4">Įveskite tekstus ir pasirinkite kategorijas, kad apmokytumėte modelį. Spauskite „Pridėti įrašą“, kad įvestumėte naują tekstą ir kategoriją.</p>
-
+  <p class="text-center mb-4">Šiuo metu treniravimo duomenų bazėje yra <span th:text="${count}"></span> įrašų.</p>
+  <div class="text-center mt-3" style="margin-bottom: 20px;">
+    <a th:href="@{/admin/ai-training/data}" class="btn btn-outline-info">Peržiūrėti treniravimo duomenis</a>
+  </div>
   <!-- Pranešimų rodymas -->
   <div th:if="${message}" th:class="'alert alert-' + ${messageType ?: 'info'} + ' alert-dismissible fade show'" role="alert">
     <span th:text="${message}"></span>
@@ -19,101 +22,142 @@
   <!-- Forma -->
   <form th:action="@{/admin/ai-training}" method="post" class="mt-4" id="training-form">
     <!-- CSRF apsauga -->
-    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+    <input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" id="csrf-token"/>
 
     <!-- Įrašų konteineris -->
     <div id="entries-container">
       <div class="entry mb-3" id="entry-0">
         <div class="row">
           <div class="col-md-6">
-            <label class="form-label">Tekstas</label>
-            <textarea name="texts" class="form-control" rows="4" placeholder="Įveskite tekstą" required></textarea>
+            <p><label for="text">Pridėti naują įrašą:</label></p>
+            <textarea name="texts" id="text" class="form-control" rows="4" cols="100" placeholder="Įveskite tekstą" required></textarea>
           </div>
           <div class="col-md-6">
-            <label class="form-label">Kategorija</label>
-            <select name="labels" class="form-select" required>
+            <label for="category" class="form-label"></label>
+            <select name="labels" id="category" class="form-select" required>
               <option value="" disabled selected>Pasirinkite kategoriją</option>
               <option th:each="category : ${categories}" th:value="${category}" th:text="${category}"></option>
             </select>
+            <div id="text-error" class="text-danger mt-1"></div>
+            <div id="category-error" class="text-danger mt-1"></div>
           </div>
         </div>
-        <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeEntry('entry-0')">Pašalinti</button>
       </div>
     </div>
 
     <!-- Pridėti įrašą mygtukas -->
-    <button type="button" class="btn btn-outline-secondary btn-sm mt-3 mb-3" onclick="addEntry()">Pridėti įrašą</button>
+    <div class="text-center" style="margin-bottom: 20px; margin-top: 20px;">
+    <button type="button" class="btn btn-outline-secondary btn-sm mt-3 mb-3" onclick="addSingleEntry()" id="add-btn">
+      <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+      Pridėti įrašą
+    </button>
+    </div>
 
     <div class="text-center">
-      <button type="submit" class="btn btn-primary" id="submit-btn">
-        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
-        Treniruoti modelį
-      </button>
+    <button type="button" class="btn btn-primary" id="submit-btn" onclick="trainModel()">
+      <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+      Treniruoti modelį
+    </button>
     </div>
   </form>
 </div>
 
 <script th:src="@{/webjars/bootstrap/5.3.3/js/bootstrap.bundle.min.js}"></script>
 <script>
-  let entryCount = 1;
+  function addSingleEntry() {
+    const text = document.getElementById('text').value.trim();
+    const category = document.getElementById('category').value;
+    const btn = document.getElementById('add-btn');
+    const textError = document.getElementById('text-error');
+    const categoryError = document.getElementById('category-error');
+    const csrfToken = document.getElementById('csrf-token').value;
 
-  function addEntry() {
-    const container = document.getElementById('entries-container');
-    const entryDiv = document.createElement('div');
-    entryDiv.className = 'entry mb-3';
-    entryDiv.id = `entry-${entryCount}`;
-    entryDiv.innerHTML = `
-      <div class="row">
-        <div class="col-md-6">
-          <label class="form-label">Tekstas</label>
-          <textarea name="texts" class="form-control" rows="4" placeholder="Įveskite tekstą" required></textarea>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label">Kategorija</label>
-          <select name="labels" class="form-select" required>
-            <option value="" disabled selected>Pasirinkite kategoriją</option>
-            <option th:each="category : ${categories}" th:value="${category}" th:text="${category}"></option>
-          </select>
-        </div>
-      </div>
-      <button type="button" class="btn btn-outline-danger btn-sm mt-2" onclick="removeEntry('entry-${entryCount}')">Pašalinti</button>
-    `;
-    container.appendChild(entryDiv);
-    entryCount++;
-  }
+    // Klientų pusės validacija
+    textError.textContent = '';
+    categoryError.textContent = '';
+    let valid = true;
 
-  function removeEntry(id) {
-    const entry = document.getElementById(id);
-    if (document.querySelectorAll('.entry').length > 1) {
-      entry.remove();
-    } else {
-      alert('Turi likti bent vienas įrašas.');
+    if (!text) {
+      textError.textContent = 'Tekstas negali būti tuščias.';
+      valid = false;
     }
-  }
+    if (!category) {
+      categoryError.textContent = 'Pasirinkite kategoriją.';
+      valid = false;
+    }
 
-  // Klientų pusės validacija
-  document.getElementById('training-form').addEventListener('submit', (e) => {
-    const textareas = document.querySelectorAll('textarea[name="texts"]');
-    const selects = document.querySelectorAll('select[name="labels"]');
-    for (let textarea of textareas) {
-      if (!textarea.value.trim()) {
-        e.preventDefault();
-        alert('Visi tekstų laukai turi būti užpildyti.');
-        return;
-      }
-    }
-    for (let select of selects) {
-      if (!select.value) {
-        e.preventDefault();
-        alert('Visos kategorijos turi būti pasirinktos.');
-        return;
-      }
-    }
+    if (!valid) return;
+
     // Rodyti progreso indikatorių
-    const btn = document.getElementById('submit-btn');
     btn.querySelector('.spinner-border').classList.remove('d-none');
     btn.disabled = true;
-  });
+
+    // Siųsti AJAX užklausą
+    fetch('/admin/ai-training/add-single', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRF-TOKEN': csrfToken
+      },
+      body: new URLSearchParams({
+        'text': text,
+        'category': category
+      })
+    })
+            .then(response => {
+              btn.querySelector('.spinner-border').classList.add('d-none');
+              btn.disabled = false;
+              if (response.ok) {
+                return response.text();
+              } else {
+                return response.text().then(text => { throw new Error(text); });
+              }
+            })
+            .then(message => {
+              alert(message);
+              document.getElementById('text').value = '';
+              document.getElementById('category').value = '';
+              // Atnaujinti įrašų skaičių
+              fetch('/admin/ai-training/data-info')
+                      .then(res => res.text())
+                      .then(count => {
+                        document.querySelector('span[th\\:text="${count}"]').textContent = count.match(/\d+/)[0];
+                      });
+            })
+            .catch(error => {
+              alert('Klaida pridedant įrašą: ' + error.message);
+            });
+  }
+
+  function trainModel() {
+    const btn = document.getElementById('submit-btn');
+    const csrfToken = document.getElementById('csrf-token').value;
+
+    btn.querySelector('.spinner-border').classList.remove('d-none');
+    btn.disabled = true;
+
+    fetch('/admin/ai-training/train', {
+      method: 'POST',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken
+      }
+    })
+            .then(response => {
+              btn.querySelector('.spinner-border').classList.add('d-none');
+              btn.disabled = false;
+              if (response.ok) {
+                return response.text();
+              } else {
+                return response.text().then(text => { throw new Error(text); });
+              }
+            })
+            .then(message => {
+              alert(message);
+            })
+            .catch(error => {
+              alert('Klaida treniruojant modelį: ' + error.message);
+            });
+  }
 </script>
 </body>
 </html>

@@ -1,31 +1,37 @@
 
   <!-- src/main/resources/templates/fragments/header.html -->
   <!—- Fragmentas: tik HEADER blokas —>
-  <div th:fragment="header">
+  <div th:fragment="header" xmlns:font-size="http://www.w3.org/1999/xhtml">
     <header class="bg-dark text-white p-1">
       <div class="d-flex justify-content-between align-items-center">
         <a href="/" class="text-white text-decoration-none h2">
-          <img src=".../ziniumanas.png" alt="Ziniumanas logotipas" class="img-fluid" style="max-height: 50px;"></a>
+          <img src="/ziniumanas.png" alt="Ziniumanas logotipas" style="max-height: 50px;"></a>
+        <div class="bg-dark text-white px-2 py-1 w-100" style="max-width: 200px; height: auto; aspect-ratio: 10 / 3;">
+          <p class="fst-italic" style="font-size: 0.6rem;margin-bottom: 0.125rem">Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.</p>
+          <p class="fst-italic" style="font-size: 0.6rem; text-align: right"></p>
+        </div>
         <nav class="mt-2 mt-md-0">
           <ul class="nav flex-nowrap">
             <li class="nav-item"><a class="nav-link text-white" href="/">Naujienos</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/lietuvoje">Lietuvoje</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/pasaulyje">Pasaulyje</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/politika">Politika</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/ekonomika">Ekonomika</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/kultura">Kultūra</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/mokslas">Mokslas</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/technologijos">Technologijos</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/sportas">Sportas</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/istorija">Istorija</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/muzika">Muzika</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/maistas">Maistas</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/laisvalaikis">Laisvalaikis</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/sveikata">Sveikata</a></li>
+          </ul>
+          <ul class="nav flex-nowrap" style="margin-left: 80px; margin-right: 80px;">
+            <li class="nav-item"><a class="nav-link text-white" href="/lietuvoje">Lietuvoje</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/politika">Politika</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/mokslas">Mokslas</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/sportas">Sportas</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/muzika">Muzika</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/laisvalaikis">Laisvalaikis</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="/vaikams">Vaikams</a></li>
           </ul>
         </nav>
-
+        <a href="/login" class="btn btn-outline-light">Prisijungti</a>
         <form class="d-flex mt-2 mt-md-0" action="/search" method="get">
           <input class="form-control me-2" type="search" name="q" placeholder="Ieškoti...">
           <button class="btn btn-outline-light" type="submit">🔍</button>

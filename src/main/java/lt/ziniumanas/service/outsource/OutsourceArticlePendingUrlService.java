@@ -14,6 +14,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -27,13 +31,13 @@ public class OutsourceArticlePendingUrlService {
     private final NewsSourceRepository newsSourceRepository;
     private final OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
     private final OutsourceArticlePendingUrlRepository pendingUrlRepository;
-    private final PendingArticleUrlTableSequenceResetUtil sequenceResetUtil; // <- pridėta
+    private final PendingArticleUrlTableSequenceResetUtil sequenceResetUtil;
 
     public OutsourceArticlePendingUrlService(
             NewsSourceRepository newsSourceRepository,
             OutsourceArticleScrapingRuleRepository scrapingRuleRepository,
             OutsourceArticlePendingUrlRepository pendingUrlRepository,
-            PendingArticleUrlTableSequenceResetUtil sequenceResetUtil // <- injekcija
+            PendingArticleUrlTableSequenceResetUtil sequenceResetUtil
     ) {
         this.newsSourceRepository = newsSourceRepository;
         this.scrapingRuleRepository = scrapingRuleRepository;
@@ -41,43 +45,41 @@ public class OutsourceArticlePendingUrlService {
         this.sequenceResetUtil = sequenceResetUtil;
     }
 
-    /**
-     * Bendras metodas, kuris surenka straipsnių URL iš visų šaltinių pagal jų taisykles.
-     */
+    @EventListener(ApplicationReadyEvent.class)
+    public void onStart() {
+        logger.info("🚀 Paleidžiama: trinami seni laukiančių URL įrašai ir surenkami nauji.");
+        collectArticleUrlsOnStart();
+    }
 
-
-    /**
-     * Programos užkrovimo metu surenkame straipsnių nuorodas iš visų šaltinių.
-     */
+    @Scheduled(fixedRate = 30 * 60 * 1000)
+    @Async
+    public void scheduledUrlCollection() {
+        logger.info("🕒 Periodinis laukiančių URL surinkimas kas 30 min...");
+        scheduleCollectArticleUrls();
+    }
 
     public void collectArticleUrlsOnStart() {
         logger.info("🧹 Trinami seni įrašai ir restartuojama seka...");
         pendingUrlRepository.deleteAll();
-        sequenceResetUtil.resetPendingUrlSequence(); // <- restartavimas
+        sequenceResetUtil.resetPendingUrlSequence();
         logger.info("🌐 Pradedamas URL surinkimas iš visų šaltinių...");
         collectUrlsFromAllSources();
-        logger.info("Pradinis straipsnių URL surinkimas užbaigtas.");
+        logger.info("✅ Pradinis straipsnių URL surinkimas užbaigtas.");
     }
 
-    /**
-     * Periodinis straipsnių URL surinkimas kas 30 min.
-     */
     public void scheduleCollectArticleUrls() {
         logger.info("🕒 Pusvalandinis straipsnių URL surinkimas...");
-        collectUrlsFromAllSources(); // Kvietimas į bendrą metodą
-        logger.info("Pusvalandinis straipsnių URL surinkimas užbaigtas.");
+        collectUrlsFromAllSources();
+        logger.info("✅ Pusvalandinis straipsnių URL surinkimas užbaigtas.");
     }
 
     private void collectUrlsFromAllSources() {
         List<NewsSource> sources = newsSourceRepository.findAll();
         for (NewsSource source : sources) {
-            collectArticleUrls(source); // Šis metodas apdoroja kiekvieną šaltinį
+            collectArticleUrls(source);
         }
     }
-    /**
-     * Metodas, kuris surenka straipsnių nuorodas pagal šaltinio taisykles.
-     * @param source Šaltinis, kurio URL ir taisyklės bus naudojamos.
-     */
+
     private void collectArticleUrls(NewsSource source) {
         logger.info("🔍 Tikrinamas šaltinis: {}", source.getSourceName());
 
@@ -91,18 +93,15 @@ public class OutsourceArticlePendingUrlService {
 
         for (OutsourceArticleScrapingRule rule : rules) {
             try {
-                // Susiekimas su šaltiniu pagal jo URL ir HTML turinio gavimas
                 Document doc = Jsoup.connect(source.getUrlAddress())
                         .userAgent("Mozilla/5.0")
                         .timeout(10000)
                         .get();
 
-                // Pasirenkame straipsnių pavadinimus pagal title_selector
                 Elements postTitles = doc.select(rule.getTitleSelector());
 
-                // Iteruojame per rastus pavadinimus ir ištraukime straipsnio nuorodas
                 for (Element postTitle : postTitles) {
-                    Element linkElement = postTitle.selectFirst("a[href]"); // Randa pirmą <a> su href
+                    Element linkElement = postTitle.selectFirst("a[href]");
                     if (linkElement != null) {
                         String url = linkElement.absUrl("href");
                         if (!url.isBlank() && foundUrls.add(url)) {
@@ -119,11 +118,6 @@ public class OutsourceArticlePendingUrlService {
         }
     }
 
-    /**
-     * Metodas, kuris išsaugo naujas straipsnių nuorodas į duomenų bazę.
-     * @param url Straipsnio URL.
-     * @param source Šaltinis, iš kurio nuoroda buvo paimta.
-     */
     private void savePendingUrl(String url, NewsSource source) {
         if (pendingUrlRepository.findByUrl(url).isEmpty()) {
             OutsourceArticlePendingUrl pending = OutsourceArticlePendingUrl.builder()

@@ -6,6 +6,7 @@ import lt.ziniumanas.model.outsource.OutsourceArticlePendingUrl;
 import lt.ziniumanas.model.outsource.OutsourceArticleScrapingRule;
 import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
+import lt.ziniumanas.repository.NewsSourceRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
 import lt.ziniumanas.service.ai_service.ArticleCategorizationServicebyAI;
@@ -13,6 +14,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -27,47 +29,33 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OutsourceArticleService {
     private static final Logger logger = LoggerFactory.getLogger(OutsourceArticleService.class);
 
-    private final OutsourceArticlePendingUrlRepository pendingUrlRepository;
-    private final OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
-    private final OutsourceArticlePendingUrlService pendingUrlService;
-    private final ArticleRepository articleRepository;
-    private final ArticleCategorizationServicebyAI articleCategorizationServicebyAI;
-
-    public OutsourceArticleService(
-            OutsourceArticlePendingUrlRepository pendingUrlRepository,
-            OutsourceArticleScrapingRuleRepository scrapingRuleRepository,
-            OutsourceArticlePendingUrlService pendingUrlService,
-            ArticleRepository articleRepository,
-            ArticleCategorizationServicebyAI articleCategorizationServicebyAI
-    ) {
-        this.pendingUrlRepository = pendingUrlRepository;
-        this.scrapingRuleRepository = scrapingRuleRepository;
-        this.pendingUrlService = pendingUrlService;
-        this.articleRepository = articleRepository;
-        this.articleCategorizationServicebyAI = articleCategorizationServicebyAI;
-    }
+    @Autowired private ArticleRepository articleRepository;
+    @Autowired private NewsSourceRepository newsSourceRepository;
+    @Autowired private OutsourceArticlePendingUrlRepository pendingUrlRepository;
+    @Autowired private OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
+    @Autowired private ArticleCategorizationServicebyAI articleCategorizationServicebyAI;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStart() {
-        pendingUrlService.collectArticleUrlsOnStart();
+        logger.info("🚀 Pradedamas straipsnių apdorojimas aplikacijos paleidimo metu...");
+        collectArticlesFromSources();
     }
 
     @Scheduled(fixedRate = 30 * 60 * 1000)
     @Async
-    public void processPendingUrls() {
-        logger.info("🚀 Pradedamas straipsnių apdorojimas iš laukiančių URL...");
-        pendingUrlService.scheduleCollectArticleUrls();
+    public void scheduledCollection() {
+        logger.info("🕒 Periodinis straipsnių apdorojimas kas 30 min...");
+        collectArticlesFromSources();
+    }
 
+    public void collectArticlesFromSources() {
         List<OutsourceArticlePendingUrl> pendingUrls = pendingUrlRepository.findAll();
-        if (pendingUrls.isEmpty()) {
-            logger.info("ℹ️ Nėra laukiančių URL apdorojimui.");
-            return;
-        }
 
         for (OutsourceArticlePendingUrl pending : pendingUrls) {
             NewsSource source = pending.getNewsSource();
@@ -82,6 +70,7 @@ public class OutsourceArticleService {
 
                     String rawTitle = doc.title();
                     String title = cleanTitle(rawTitle);
+
                     Element dateElement = doc.selectFirst(rule.getDateSelector());
                     if (dateElement == null) {
                         logger.warn("⚠️ Nerasta data pagal selektorių '{}' URL: {}", rule.getDateSelector(), pending.getUrl());
@@ -89,7 +78,6 @@ public class OutsourceArticleService {
                     }
 
                     String dateString = dateElement.text().trim();
-                    logger.debug("📅 Datos tekstas: '{}'", dateString);
                     LocalDateTime dateTime = parseDate(dateString);
                     if (dateTime == null) {
                         logger.warn("⚠️ Nepavyko interpretuoti datos '{}' URL: {}", dateString, pending.getUrl());
@@ -97,7 +85,6 @@ public class OutsourceArticleService {
                     }
 
                     LocalDate date = dateTime.toLocalDate();
-
                     if (!date.equals(LocalDate.now())) {
                         logger.debug("📅 Praleista – straipsnio data {} nesutampa su šiandienos {}", date, LocalDate.now());
                         continue;
@@ -105,7 +92,7 @@ public class OutsourceArticleService {
 
                     String content = extractArticleContent(doc, rule, pending.getUrl());
                     if (content.isEmpty()) {
-                        logger.warn("⚠️ Turinio išgauti nepavyko URL: {}", pending.getUrl());
+                        logger.warn("⚠️ Tuščias turinys URL: {}", pending.getUrl());
                         continue;
                     }
 
@@ -136,61 +123,45 @@ public class OutsourceArticleService {
 
     private String extractArticleContent(Document doc, OutsourceArticleScrapingRule rule, String url) {
         StringBuilder contentBuilder = new StringBuilder();
+        Element containerElement = rule.getContentSelector() != null && !rule.getContentSelector().isEmpty()
+                ? doc.selectFirst(rule.getContentSelector()) : doc;
 
-        Element containerElement = null;
-        if (rule.getContentSelector() != null && !rule.getContentSelector().isEmpty()) {
-            containerElement = doc.selectFirst(rule.getContentSelector());
-            if (containerElement == null) {
-                logger.warn("⚠️ Nerastas turinio konteineris pagal selektorių '{}' URL: {}", rule.getContentSelector(), url);
-                return "";
-            }
-        } else {
-            containerElement = doc;
+        if (containerElement == null) {
+            logger.warn("⚠️ Nerastas turinio konteineris pagal selektorių '{}' URL: {}", rule.getContentSelector(), url);
+            return "";
         }
 
         if (rule.getContentSelectorSummary() != null && !rule.getContentSelectorSummary().isEmpty()) {
             Element summaryElement = containerElement.selectFirst(rule.getContentSelectorSummary());
             if (summaryElement != null) {
-                contentBuilder.append(summaryElement.text().trim()).append("\n\n");
-            } else {
-                logger.warn("⚠️ Nerasta straipsnio santrauka pagal selektorių '{}' URL: {}", rule.getContentSelectorSummary(), url);
+                contentBuilder.append(summaryElement.text().trim()).append("\n---\n");
             }
         }
 
         if (rule.getContentSelectorParagraphs() != null && !rule.getContentSelectorParagraphs().isEmpty()) {
             Elements paragraphElements = containerElement.select(rule.getContentSelectorParagraphs());
-            if (paragraphElements != null && !paragraphElements.isEmpty()) {
-                for (Element paragraph : paragraphElements) {
-                    contentBuilder.append(paragraph.text().trim()).append("\n\n");
-                }
-            } else {
-                logger.warn("⚠️ Nerasta straipsnio pastraipos pagal selektorių '{}' URL: {}", rule.getContentSelectorParagraphs(), url);
-            }
+            String paragraphs = paragraphElements.stream()
+                    .map(e -> e.text().trim())
+                    .filter(text -> !text.isEmpty())
+                    .collect(Collectors.joining("\n---\n"));
+            contentBuilder.append(paragraphs);
         }
+
         return contentBuilder.toString().trim();
     }
 
     private LocalDateTime parseDate(String rawDate) {
         List<String> patterns = List.of(
-                "yyyy.MM.dd HH:mm",
-                "yyyy.MM.dd  HH:mm",
-                "yyyy.MM.ddHH:mm",
-                "yyyy MM dd / HH:mm",
-                "yyyy-MM-dd HH:mm",
-                "yyyy/MM/dd HH:mm",
-                "yyyy-MM-dd HH:mm:ss",
-                "dd MMMM yyyy HH:mm",
-                "dd MMM yyyy HH:mm",
+                "yyyy.MM.dd HH:mm", "yyyy.MM.dd  HH:mm", "yyyy.MM.ddHH:mm",
+                "yyyy MM dd / HH:mm", "yyyy-MM-dd HH:mm", "yyyy/MM/dd HH:mm",
+                "yyyy-MM-dd HH:mm:ss", "dd MMMM yyyy HH:mm", "dd MMM yyyy HH:mm",
                 "yyyy MMMM dd"
         );
-
         for (String pattern : patterns) {
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
                 return LocalDateTime.parse(rawDate, formatter);
-            } catch (DateTimeParseException e) {
-                // Ignore and try the next pattern
-            }
+            } catch (DateTimeParseException ignored) {}
         }
         logger.error("❗ Nepavyko konvertuoti datos su jokiu formatu: '{}'", rawDate);
         return null;
@@ -198,7 +169,6 @@ public class OutsourceArticleService {
 
     private String cleanTitle(String rawTitle) {
         String[] separators = {"\\|", "-", "–", ":"};
-
         for (String sep : separators) {
             if (rawTitle.contains(sep)) {
                 String[] parts = rawTitle.split(sep);

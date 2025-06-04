@@ -1,4 +1,6 @@
 package lt.ziniumanas.controller.admin;
+import lt.ziniumanas.dto.ArticleClassificationRequest;
+import lt.ziniumanas.dto.ArticleClassificationResponse;
 import lt.ziniumanas.service.ai_service.ArticleCategorizationServicebyAI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,33 +15,8 @@ public class ArticleCategorizationAPIController {
     }
 
     @PostMapping
-    public ClassificationResponse classify(@RequestBody ClassificationRequest request) {
+    public ArticleClassificationResponse classify(@RequestBody ArticleClassificationRequest request) {
         String category = categorizationService.categorizeArticle(request.getText());
-        return new ClassificationResponse(category);
-    }
-
-    // DTO klasės (gali būti perkeltos į atskirus failus)
-    public static class ClassificationRequest {
-        private String text;
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
-    }
-
-    public static class ClassificationResponse {
-        private String category;
-
-        public ClassificationResponse(String category) {
-            this.category = category;
-        }
-
-        public String getCategory() {
-            return category;
-        }
+        return new ArticleClassificationResponse(category);
     }
 }

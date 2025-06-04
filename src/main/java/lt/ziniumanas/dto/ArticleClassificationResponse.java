@@ -6,12 +6,14 @@ import lombok.Setter;
 @Setter
 @Getter
 public class ArticleClassificationResponse {
+
     private String category;
-
-    public ArticleClassificationResponse() {}
-
     public ArticleClassificationResponse(String category) {
         this.category = category;
+    }
+
+    public String getCategory() {
+        return category;
     }
 
 }
