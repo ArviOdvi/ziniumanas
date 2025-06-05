@@ -11,6 +11,9 @@ import java.util.List;
 @Table(name = "article",
         indexes = {
                 @Index(name = "idx_article_category_status", columnList = "article_category, article_status")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"article_name", "article_date"})
         })
 @Getter
 @Setter

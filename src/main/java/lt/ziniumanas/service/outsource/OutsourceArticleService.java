@@ -17,6 +17,7 @@ import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,8 @@ public class OutsourceArticleService {
                             .get();
 
                     String rawTitle = doc.title();
-                    String title = cleanTitle(rawTitle);
+                    long raw_source = source.getId();
+                    String title = cleanTitle(rawTitle, raw_source);
 
                     Element dateElement = doc.selectFirst(rule.getDateSelector());
                     if (dateElement == null) {
@@ -108,8 +110,13 @@ public class OutsourceArticleService {
                                 .newsSource(source)
                                 .articleCategory(category)
                                 .build();
-                        articleRepository.save(article);
-                        logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, category);
+
+                        try {
+                            articleRepository.save(article);
+                            logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, category);
+                        } catch (DataIntegrityViolationException e) {
+                            logger.warn("⚠️ Straipsnis jau įrašytas (unikalumo apribojimas): {}", title);
+                        }
                     } else {
                         logger.debug("📑 Straipsnis '{}' jau egzistuoja, praleidžiamas", title);
                     }
@@ -167,15 +174,9 @@ public class OutsourceArticleService {
         return null;
     }
 
-    private String cleanTitle(String rawTitle) {
-        String[] separators = {"\\|", "-", "–", ":"};
-        for (String sep : separators) {
-            if (rawTitle.contains(sep)) {
-                String[] parts = rawTitle.split(sep);
-                if (parts.length > 1) {
-                    return parts[0].trim();
-                }
-            }
+    private String cleanTitle(String rawTitle, long source) {
+        if (source == 4 && rawTitle.length() > 20) {
+            rawTitle = rawTitle.substring(0, rawTitle.length() - 20);
         }
         return rawTitle.trim();
     }
