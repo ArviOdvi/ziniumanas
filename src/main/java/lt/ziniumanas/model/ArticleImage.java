@@ -23,10 +23,10 @@ public class ArticleImage {
     @Column(name = "image_url", nullable = false, length = 2048)
     private String imageUrl;
 
-    @Column(name = "alt_text", length = 255)
+    @Column(name = "alt_text")
     private String altText;
 
-    @Column(length = 255)
+    @Column()
     private String caption;
 
     @Column(name = "order_num") // Geresnis pavadinimas nei tiesiog "order"

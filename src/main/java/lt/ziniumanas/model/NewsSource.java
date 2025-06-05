@@ -24,7 +24,7 @@ public class NewsSource {
     @Column(name = "url_address", nullable = false, length = 2048) // URL gali būti ilgas
     private String urlAddress;
 
-    @Column(name = "source_name", nullable = false, length = 255)
+    @Column(name = "source_name", nullable = false)
     private String sourceName;
 
 }

@@ -23,7 +23,7 @@ public class ArticleVideo {
     @Column(name = "video_url", nullable = false, length = 2048)
     private String videoUrl;
 
-    @Column(length = 255)
+    @Column()
     private String caption;
 
     @Column(name = "order_num")

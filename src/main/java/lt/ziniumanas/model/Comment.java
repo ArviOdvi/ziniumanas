@@ -25,7 +25,7 @@ public class Comment {
     @JoinColumn(name = "article_id", nullable = false)
     private Article article;
 
-    @Column(name = "user_name", nullable = false, length = 255)
+    @Column(name = "user_name", nullable = false)
     private String userName;
 
     @Column(name = "comment_text", columnDefinition = "TEXT", nullable = false)

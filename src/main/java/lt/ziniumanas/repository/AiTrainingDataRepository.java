@@ -1,7 +1,7 @@
 package lt.ziniumanas.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import lt.ziniumanas.model.AiCategorizationTrainingData;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
