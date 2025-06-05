@@ -9,11 +9,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-public class AdminArticleManagementService {
+public class AdminArticleService {
     private final ArticleRepository articleRepository;
 
     @Autowired
-    public AdminArticleManagementService(ArticleRepository articleRepository) {
+    public AdminArticleService(ArticleRepository articleRepository) {
         this.articleRepository = articleRepository;
     }
 

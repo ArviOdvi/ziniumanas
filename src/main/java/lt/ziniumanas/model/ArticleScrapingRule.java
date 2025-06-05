@@ -1,8 +1,7 @@
-package lt.ziniumanas.model.outsource;
+package lt.ziniumanas.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import lt.ziniumanas.model.NewsSource;
 
 @Entity
 @Table(name = "scraping_rule")
@@ -11,7 +10,7 @@ import lt.ziniumanas.model.NewsSource;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutsourceArticleScrapingRule {
+public class ArticleScrapingRule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

@@ -1,4 +1,4 @@
-package lt.ziniumanas.model.outsource;
+package lt.ziniumanas.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class OutsourceArticlePendingUrl {
+public class ArticlePendingUrl {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,13 +2,13 @@ package lt.ziniumanas.service.outsource;
 
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.NewsSource;
-import lt.ziniumanas.model.outsource.OutsourceArticlePendingUrl;
-import lt.ziniumanas.model.outsource.OutsourceArticleScrapingRule;
+import lt.ziniumanas.model.ArticlePendingUrl;
+import lt.ziniumanas.model.ArticleScrapingRule;
 import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.NewsSourceRepository;
-import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
-import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
+import lt.ziniumanas.repository.ArticlePendingUrlRepository;
+import lt.ziniumanas.repository.ArticleScrapingRuleRepository;
 import lt.ziniumanas.service.ai_service.AiArticleCategorizationService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -37,8 +37,8 @@ public class OutsourceArticleService {
 
     @Autowired private ArticleRepository articleRepository;
     @Autowired private NewsSourceRepository newsSourceRepository;
-    @Autowired private OutsourceArticlePendingUrlRepository pendingUrlRepository;
-    @Autowired private OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
+    @Autowired private ArticlePendingUrlRepository pendingUrlRepository;
+    @Autowired private ArticleScrapingRuleRepository scrapingRuleRepository;
     @Autowired private AiArticleCategorizationService aiArticleCategorizationService;
 
     @EventListener(ApplicationReadyEvent.class)
@@ -55,13 +55,13 @@ public class OutsourceArticleService {
     }
 
     public void collectArticlesFromSources() {
-        List<OutsourceArticlePendingUrl> pendingUrls = pendingUrlRepository.findAll();
+        List<ArticlePendingUrl> pendingUrls = pendingUrlRepository.findAll();
 
-        for (OutsourceArticlePendingUrl pending : pendingUrls) {
+        for (ArticlePendingUrl pending : pendingUrls) {
             NewsSource source = pending.getNewsSource();
-            List<OutsourceArticleScrapingRule> rules = scrapingRuleRepository.findByNewsSourceId(source.getId());
+            List<ArticleScrapingRule> rules = scrapingRuleRepository.findByNewsSourceId(source.getId());
 
-            for (OutsourceArticleScrapingRule rule : rules) {
+            for (ArticleScrapingRule rule : rules) {
                 try {
                     Document doc = Jsoup.connect(pending.getUrl())
                             .userAgent("Mozilla/5.0")
@@ -121,7 +121,7 @@ public class OutsourceArticleService {
         }
     }
 
-    private String extractArticleContent(Document doc, OutsourceArticleScrapingRule rule, String url) {
+    private String extractArticleContent(Document doc, ArticleScrapingRule rule, String url) {
         StringBuilder contentBuilder = new StringBuilder();
         Element containerElement = rule.getContentSelector() != null && !rule.getContentSelector().isEmpty()
                 ? doc.selectFirst(rule.getContentSelector()) : doc;

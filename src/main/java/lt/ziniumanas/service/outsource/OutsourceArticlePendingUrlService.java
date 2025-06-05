@@ -1,11 +1,11 @@
 package lt.ziniumanas.service.outsource;
 
 import lt.ziniumanas.model.NewsSource;
-import lt.ziniumanas.model.outsource.OutsourceArticleScrapingRule;
-import lt.ziniumanas.model.outsource.OutsourceArticlePendingUrl;
+import lt.ziniumanas.model.ArticleScrapingRule;
+import lt.ziniumanas.model.ArticlePendingUrl;
 import lt.ziniumanas.repository.NewsSourceRepository;
-import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
-import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
+import lt.ziniumanas.repository.ArticleScrapingRuleRepository;
+import lt.ziniumanas.repository.ArticlePendingUrlRepository;
 import lt.ziniumanas.util.PendingArticleUrlTableSequenceResetUtil;
 
 import org.jsoup.Jsoup;
@@ -29,14 +29,14 @@ public class OutsourceArticlePendingUrlService {
     private static final Logger logger = LoggerFactory.getLogger(OutsourceArticlePendingUrlService.class);
 
     private final NewsSourceRepository newsSourceRepository;
-    private final OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
-    private final OutsourceArticlePendingUrlRepository pendingUrlRepository;
+    private final ArticleScrapingRuleRepository scrapingRuleRepository;
+    private final ArticlePendingUrlRepository pendingUrlRepository;
     private final PendingArticleUrlTableSequenceResetUtil sequenceResetUtil;
 
     public OutsourceArticlePendingUrlService(
             NewsSourceRepository newsSourceRepository,
-            OutsourceArticleScrapingRuleRepository scrapingRuleRepository,
-            OutsourceArticlePendingUrlRepository pendingUrlRepository,
+            ArticleScrapingRuleRepository scrapingRuleRepository,
+            ArticlePendingUrlRepository pendingUrlRepository,
             PendingArticleUrlTableSequenceResetUtil sequenceResetUtil
     ) {
         this.newsSourceRepository = newsSourceRepository;
@@ -83,7 +83,7 @@ public class OutsourceArticlePendingUrlService {
     private void collectArticleUrls(NewsSource source) {
         logger.info("🔍 Tikrinamas šaltinis: {}", source.getSourceName());
 
-        List<OutsourceArticleScrapingRule> rules = scrapingRuleRepository.findByNewsSourceId(source.getId());
+        List<ArticleScrapingRule> rules = scrapingRuleRepository.findByNewsSourceId(source.getId());
         if (rules.isEmpty()) {
             logger.warn("⚠️ Nerasta scraping taisyklių šaltiniui: {}", source.getSourceName());
             return;
@@ -91,7 +91,7 @@ public class OutsourceArticlePendingUrlService {
 
         Set<String> foundUrls = new HashSet<>();
 
-        for (OutsourceArticleScrapingRule rule : rules) {
+        for (ArticleScrapingRule rule : rules) {
             try {
                 Document doc = Jsoup.connect(source.getUrlAddress())
                         .userAgent("Mozilla/5.0")
@@ -120,7 +120,7 @@ public class OutsourceArticlePendingUrlService {
 
     private void savePendingUrl(String url, NewsSource source) {
         if (pendingUrlRepository.findByUrl(url).isEmpty()) {
-            OutsourceArticlePendingUrl pending = OutsourceArticlePendingUrl.builder()
+            ArticlePendingUrl pending = ArticlePendingUrl.builder()
                     .url(url)
                     .newsSource(source)
                     .build();

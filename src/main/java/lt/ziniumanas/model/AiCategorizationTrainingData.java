@@ -1,4 +1,4 @@
-package lt.ziniumanas.model.aimodel;
+package lt.ziniumanas.model;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TrainingData {
+public class AiCategorizationTrainingData {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

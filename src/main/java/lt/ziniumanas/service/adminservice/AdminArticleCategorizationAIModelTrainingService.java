@@ -2,8 +2,8 @@ package lt.ziniumanas.service.adminservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
-import lt.ziniumanas.model.aimodel.TrainingData;
-import lt.ziniumanas.repository.ai_repository.TrainingDataRepository;
+import lt.ziniumanas.model.AiCategorizationTrainingData;
+import lt.ziniumanas.repository.AiTrainingDataRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,34 +20,34 @@ import java.util.Map;
 public class AdminArticleCategorizationAIModelTrainingService {
     private static final Logger log = LoggerFactory.getLogger(AdminArticleCategorizationAIModelTrainingService.class);
     private static final String BASE_PATH = System.getProperty("user.dir");
-    private final TrainingDataRepository trainingDataRepository;
+    private final AiTrainingDataRepository aiTrainingDataRepository;
 
     @Autowired
-    public AdminArticleCategorizationAIModelTrainingService(TrainingDataRepository trainingDataRepository) {
-        this.trainingDataRepository = trainingDataRepository;
+    public AdminArticleCategorizationAIModelTrainingService(AiTrainingDataRepository aiTrainingDataRepository) {
+        this.aiTrainingDataRepository = aiTrainingDataRepository;
     }
 
     public long getTrainingDataCount() {
         try {
-            return trainingDataRepository.count();
+            return aiTrainingDataRepository.count();
         } catch (Exception e) {
             log.error("Klaida gaunant treniravimo duomenų kiekį: {}", e.getMessage(), e);
             return 0;
         }
     }
 
-    public List<TrainingData> getRecentTrainingData() {
+    public List<AiCategorizationTrainingData> getRecentTrainingData() {
         try {
-            return trainingDataRepository.findTop15ByOrderByCreatedAtDesc();
+            return aiTrainingDataRepository.findTop15ByOrderByCreatedAtDesc();
         } catch (Exception e) {
             log.error("Klaida gaunant naujausius treniravimo duomenis: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }
 
-    public List<TrainingData> getAllTrainingData() {
+    public List<AiCategorizationTrainingData> getAllTrainingData() {
         try {
-            return trainingDataRepository.findAllByOrderByCreatedAtDesc();
+            return aiTrainingDataRepository.findAllByOrderByCreatedAtDesc();
         } catch (Exception e) {
             log.error("Klaida gaunant visus treniravimo duomenis: {}", e.getMessage(), e);
             return Collections.emptyList();
@@ -70,17 +70,17 @@ public class AdminArticleCategorizationAIModelTrainingService {
         }
 
         for (int i = 0; i < texts.size(); i++) {
-            TrainingData data = TrainingData.builder()
+            AiCategorizationTrainingData data = AiCategorizationTrainingData.builder()
                     .text(texts.get(i))
                     .category(labels.get(i))
                     .build();
-            trainingDataRepository.save(data);
+            aiTrainingDataRepository.save(data);
             log.info("Įrašytas įrašas: tekstas='{}', kategorija='{}'", texts.get(i), labels.get(i));
         }
     }
 
     public void trainModel() throws Exception {
-        List<TrainingData> rows = trainingDataRepository.findAll();
+        List<AiCategorizationTrainingData> rows = aiTrainingDataRepository.findAll();
 
         if (rows.size() < 10) {
             throw new RuntimeException("Per mažai įrašų modelio treniravimui. Reikalinga bent 10 įrašų, yra: " + rows.size());
@@ -91,9 +91,9 @@ public class AdminArticleCategorizationAIModelTrainingService {
         int trainEnd = (int) (total * 0.6);
         int validEnd = (int) (total * 0.8);
 
-        List<TrainingData> trainRows = rows.subList(0, trainEnd);
-        List<TrainingData> validRows = rows.subList(trainEnd, validEnd);
-        List<TrainingData> testRows = rows.subList(validEnd, total);
+        List<AiCategorizationTrainingData> trainRows = rows.subList(0, trainEnd);
+        List<AiCategorizationTrainingData> validRows = rows.subList(trainEnd, validEnd);
+        List<AiCategorizationTrainingData> testRows = rows.subList(validEnd, total);
 
         writeCsv(trainRows, "/models/" + "dataset.csv");
         writeCsv(validRows, "/models/" + "valid.csv");
@@ -109,12 +109,12 @@ public class AdminArticleCategorizationAIModelTrainingService {
         }
     }
 
-    private void writeCsv(List<TrainingData> rows, String fileName) throws Exception {
+    private void writeCsv(List<AiCategorizationTrainingData> rows, String fileName) throws Exception {
         Path path = Path.of(BASE_PATH, fileName);
         Files.createDirectories(path.getParent());
         try (FileWriter writer = new FileWriter(path.toFile())) {
             writer.write("text,category\n");
-            for (TrainingData row : rows) {
+            for (AiCategorizationTrainingData row : rows) {
                 String text = row.getText().replace("\"", "\"\"");
                 String category = row.getCategory();
                 writer.write("\"" + text + "\",\"" + category + "\"\n");
@@ -123,7 +123,7 @@ public class AdminArticleCategorizationAIModelTrainingService {
     }
 
     public List<String> getValidCategories() {
-        List<String> categories = trainingDataRepository.findDistinctCategories();
+        List<String> categories = aiTrainingDataRepository.findDistinctCategories();
         return categories.isEmpty() ? List.of(
                 "Ekonomika", "Istorija", "Kultūra", "Laisvalaikis", "Lietuvoje",
                 "Maistas", "Mokslas", "Muzika", "Pasaulyje", "Politika",
