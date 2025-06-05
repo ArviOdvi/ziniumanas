@@ -15,14 +15,14 @@ import java.nio.charset.StandardCharsets;
 
 
 @Service
-public class ArticleCategorizationServicebyAI {
-    private static final Logger logger = LoggerFactory.getLogger(ArticleCategorizationServicebyAI.class);
+public class AiArticleCategorizationService {
+    private static final Logger logger = LoggerFactory.getLogger(AiArticleCategorizationService.class);
 
     private final ObjectMapper objectMapper;
     private final ClassificationApiProperties classificationApiProperties;
 
-    public ArticleCategorizationServicebyAI(ObjectMapper objectMapper,
-                                            ClassificationApiProperties classificationApiProperties) {
+    public AiArticleCategorizationService(ObjectMapper objectMapper,
+                                          ClassificationApiProperties classificationApiProperties) {
         this.objectMapper = objectMapper;
         this.classificationApiProperties = classificationApiProperties;
     }

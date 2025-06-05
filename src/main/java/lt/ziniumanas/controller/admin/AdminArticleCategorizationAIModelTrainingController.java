@@ -1,7 +1,7 @@
 package lt.ziniumanas.controller.admin;
 
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
-import lt.ziniumanas.service.adminservice.ArticleCategorizationAIModelTrainingbyAdminService;
+import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +15,14 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/ai-training")
-public class ArticleCategorizationAIModelTrainingbyAdminController {
-    private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingbyAdminController.class);
+public class AdminArticleCategorizationAIModelTrainingController {
+    private static final Logger log = LoggerFactory.getLogger(AdminArticleCategorizationAIModelTrainingController.class);
 
-    private final ArticleCategorizationAIModelTrainingbyAdminService trainingService;
+    private final AdminArticleCategorizationAIModelTrainingService trainingService;
 
     @Autowired
-    public ArticleCategorizationAIModelTrainingbyAdminController(
-            ArticleCategorizationAIModelTrainingbyAdminService trainingService) {
+    public AdminArticleCategorizationAIModelTrainingController(
+            AdminArticleCategorizationAIModelTrainingService trainingService) {
         this.trainingService = trainingService;
     }
 

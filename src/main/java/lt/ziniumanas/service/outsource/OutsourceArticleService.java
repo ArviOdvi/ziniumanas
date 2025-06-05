@@ -9,7 +9,7 @@ import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.NewsSourceRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticlePendingUrlRepository;
 import lt.ziniumanas.repository.outsource.OutsourceArticleScrapingRuleRepository;
-import lt.ziniumanas.service.ai_service.ArticleCategorizationServicebyAI;
+import lt.ziniumanas.service.ai_service.AiArticleCategorizationService;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -39,7 +39,7 @@ public class OutsourceArticleService {
     @Autowired private NewsSourceRepository newsSourceRepository;
     @Autowired private OutsourceArticlePendingUrlRepository pendingUrlRepository;
     @Autowired private OutsourceArticleScrapingRuleRepository scrapingRuleRepository;
-    @Autowired private ArticleCategorizationServicebyAI articleCategorizationServicebyAI;
+    @Autowired private AiArticleCategorizationService aiArticleCategorizationService;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStart() {
@@ -98,7 +98,7 @@ public class OutsourceArticleService {
 
                     boolean exists = articleRepository.findByArticleNameAndArticleDate(title, date).isPresent();
                     if (!exists) {
-                        String category = articleCategorizationServicebyAI.categorizeArticle(content);
+                        String category = aiArticleCategorizationService.categorizeArticle(content);
                         Article article = Article.builder()
                                 .articleName(title)
                                 .articleDate(date)

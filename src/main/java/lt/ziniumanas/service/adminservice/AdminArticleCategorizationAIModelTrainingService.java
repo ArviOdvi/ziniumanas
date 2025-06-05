@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,13 +17,13 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class ArticleCategorizationAIModelTrainingbyAdminService {
-    private static final Logger log = LoggerFactory.getLogger(ArticleCategorizationAIModelTrainingbyAdminService.class);
+public class AdminArticleCategorizationAIModelTrainingService {
+    private static final Logger log = LoggerFactory.getLogger(AdminArticleCategorizationAIModelTrainingService.class);
     private static final String BASE_PATH = System.getProperty("user.dir");
     private final TrainingDataRepository trainingDataRepository;
 
     @Autowired
-    public ArticleCategorizationAIModelTrainingbyAdminService(TrainingDataRepository trainingDataRepository) {
+    public AdminArticleCategorizationAIModelTrainingService(TrainingDataRepository trainingDataRepository) {
         this.trainingDataRepository = trainingDataRepository;
     }
 
