@@ -6,9 +6,11 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
           // Galima pridėti papildomus metodus, jei reikės specifinių užklausų
           Optional<Article> findByArticleNameAndArticleDate(String articleName, LocalDate articleDate);
+          List<Article> findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(String category);
 }

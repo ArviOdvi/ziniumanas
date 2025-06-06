@@ -1,7 +1,7 @@
 
   <!-- src/main/resources/templates/fragments/header.html -->
-  <!—- Fragmentas: tik HEADER blokas —>
-  <div th:fragment="header" xmlns:font-size="http://www.w3.org/1999/xhtml">
+  <!-- Fragmentas: tik HEADER blokas -->
+  <div th:fragment="header">
     <header class="bg-dark text-white p-1">
       <div class="d-flex justify-content-between align-items-center">
         <a href="/" class="text-white text-decoration-none h2">
@@ -13,27 +13,28 @@
         <nav class="mt-2 mt-md-0">
           <ul class="nav flex-nowrap">
             <li class="nav-item"><a class="nav-link text-white" href="/">Naujienos</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/pasaulyje">Pasaulyje</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/ekonomika">Ekonomika</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/kultura">Kultūra</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/technologijos">Technologijos</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/istorija">Istorija</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/maistas">Maistas</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/sveikata">Sveikata</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/pasaulyje">Pasaulyje</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/ekonomika">Ekonomika</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/kultura">Kultūra</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/technologijos">Technologijos</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/istorija">Istorija</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/maistas">Maistas</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/sveikata">Sveikata</a></li>
           </ul>
           <ul class="nav flex-nowrap" style="margin-left: 80px; margin-right: 80px;">
-            <li class="nav-item"><a class="nav-link text-white" href="/lietuvoje">Lietuvoje</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/politika">Politika</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/mokslas">Mokslas</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/sportas">Sportas</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/muzika">Muzika</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/laisvalaikis">Laisvalaikis</a></li>
-            <li class="nav-item"><a class="nav-link text-white" href="/vaikams">Vaikams</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/lietuvoje">Lietuvoje</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/politika">Politika</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/mokslas">Mokslas</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/sportas">Sportas</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/muzika">Muzika</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/laisvalaikis">Laisvalaikis</a></li>
+            <li class="nav-item"><a class="nav-link text-white" href="/kategorija/vaikams">Vaikams</a></li>
           </ul>
         </nav>
         <a href="/login" class="btn btn-outline-light">Prisijungti</a>
         <form class="d-flex mt-2 mt-md-0" action="/search" method="get">
-          <input class="form-control me-2" type="search" name="q" placeholder="Ieškoti...">
+          <label for="searchInput" class="visually-hidden">Ieškoti</label>
+          <input class="form-control me-2" type="search" id="searchInput" name="q" placeholder="Ieškoti...">
           <button class="btn btn-outline-light" type="submit">🔍</button>
         </form>
       </div>

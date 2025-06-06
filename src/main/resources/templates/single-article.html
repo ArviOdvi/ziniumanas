@@ -4,10 +4,12 @@
 <body class="d-flex flex-column min-vh-100 overflow-hidden">
 
 <!-- HEADER fragmentas -->
-<th:block th:replace="~{fragments/header :: header}" class="bg-light border-bottom position-fixed top-0 w-100 z-3"></th:block>
+<header class="bg-light border-bottom position-fixed top-0 w-100 z-3">
+    <th:block th:replace="~{fragments/header :: header}"></th:block>
+</header>
 
-
-<main class="container my-5 flex-grow-1 overflow-auto mt-5 mb-5 px-3">
+<main class="container overflow-auto px-3"
+      style="margin-top: 100px; padding-bottom: 100px; max-height: calc(100vh - 165px); z-index: 4;">
     <article>
         <h1 th:text="${article.articleName}">Straipsnio pavadinimas</h1>
         <div class="text-muted small mb-3">

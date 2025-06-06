@@ -21,6 +21,10 @@ public class ArticleService {
         return articleRepository.findAll();
     }
 
+    public List<Article> getArticlesByCategory(String category) {
+        return articleRepository.findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(category);
+    }
+
     public Optional<Article> getArticleById(Long id) {
         return articleRepository.findById(id);
     }
