@@ -1,13 +1,13 @@
 package lt.ziniumanas.service;
 //Pagrindiniai aplikacijos veiksmai ir taisykles. Naudoja repozitorijas duomenims pasiekti ir manipuliuoti.
 
+import lt.ziniumanas.exception.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.repository.ArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 @Service
 public class ArticleService {
     private final ArticleRepository articleRepository;
@@ -25,21 +25,26 @@ public class ArticleService {
         return articleRepository.findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(category);
     }
 
-    public Optional<Article> getArticleById(Long id) {
-        return articleRepository.findById(id);
+    public Article getArticleById(Long id) {
+        return articleRepository.findById(id)
+                .orElseThrow(() -> new ArticleNotFoundException(id));
     }
-
     public Article createArticle(Article article) {
         return articleRepository.save(article);
     }
 
     public Article updateArticle(Long id, Article updatedArticle) {
-        return articleRepository.findById(id)
-                .map(article -> {
-                    updatedArticle.setId(id);
-                    return articleRepository.save(updatedArticle);
-                })
-                .orElse(null); // Arba galite mesti išimtį
+        Article existing = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Straipsnis nerastas, id = " + id));
+
+        // Tik atnaujiname tai, ką leidžiame vartotojui keisti
+        existing.setArticleName(updatedArticle.getArticleName());
+        existing.setContents(updatedArticle.getContents());
+        existing.setArticleDate(updatedArticle.getArticleDate());
+        existing.setArticleStatus(updatedArticle.getArticleStatus());
+        existing.setVerificationStatus(updatedArticle.isVerificationStatus());
+
+        return articleRepository.save(existing);
     }
 
     public void deleteArticle(Long id) {

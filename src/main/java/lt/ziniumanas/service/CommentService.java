@@ -13,7 +13,7 @@ import java.util.Optional;
 @Service
 public class CommentService {
     private final CommentRepository commentRepository;
-    private final ArticleService articleService; // Priklausomybė, jei reikia validuoti straipsnį
+    private final ArticleService articleService;
 
     @Autowired
     public CommentService(CommentRepository commentRepository, ArticleService articleService) {
@@ -25,18 +25,16 @@ public class CommentService {
         return commentRepository.findByArticleIdAndParentCommentIsNullOrderByCreatedAtAsc(articleId);
     }
 
-    public Optional<Comment> getCommentById(Long id) {
-        return commentRepository.findById(id);
+    public Comment getCommentById(Long id) {
+        return commentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Komentaras nerastas, id = " + id));
     }
 
     public Comment createComment(Long articleId, Comment comment) {
-        Optional<Article> articleOptional = articleService.getArticleById(articleId);
-        if (articleOptional.isPresent()) {
-            comment.setArticle(articleOptional.get());
-            comment.setCreatedAt(LocalDateTime.now());
-            return commentRepository.save(comment);
-        }
-        return null; // Arba galima mesti išimtį
+        Article article = articleService.getArticleById(articleId);
+        comment.setArticle(article);
+        comment.setCreatedAt(LocalDateTime.now());
+        return commentRepository.save(comment);
     }
 
     public List<Comment> getRepliesByCommentId(Long parentCommentId) {
@@ -44,9 +42,9 @@ public class CommentService {
     }
 
     public void deleteComment(Long id) {
+        if (!commentRepository.existsById(id)) {
+            throw new IllegalArgumentException("Komentaras nerastas, id = " + id);
+        }
         commentRepository.deleteById(id);
     }
-
-    // Galb8t papildoma logika komentarų valdymui
 }
-

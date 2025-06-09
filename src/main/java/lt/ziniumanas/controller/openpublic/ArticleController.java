@@ -13,26 +13,23 @@ import java.util.List;
 //Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
 @Controller
 public class  ArticleController {
-    private final ArticleRepository articleRepository;
     private final ArticleService articleService;
 
-    public ArticleController(ArticleRepository articleRepository, ArticleService articleService) {
-        this.articleRepository = articleRepository;
+    public ArticleController(ArticleService articleService) {
         this.articleService = articleService;
     }
 
     @GetMapping("/")
     public String showArticles(Model model) {
-        List<Article> articles = articleRepository.findAll(); // ištraukiam visus straipsnius
-        model.addAttribute("articles", articles); // pridedam į modelį
-        return "index"; // šablonas bus index.html
+        List<Article> articles = articleService.getAllArticles();
+        model.addAttribute("articles", articles);
+        return "index";
     }
     @GetMapping("/straipsnis/{id}")
     public String showSingleArticle(@PathVariable Long id, Model model) {
-        Article article = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Straipsnis nerastas, id=" + id));
+        Article article = articleService.getArticleById(id);
         model.addAttribute("article", article);
-        return "single-article";
+        return "single-article"; // šablonas atvaizduos vieną straipsnį
     }
     @GetMapping("/kategorija/{category}")
     public String getArticlesByCategory(@PathVariable String category, Model model) {

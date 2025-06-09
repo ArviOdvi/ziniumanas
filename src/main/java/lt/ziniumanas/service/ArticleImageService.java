@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 @Service
 public class ArticleImageService {
     private final ArticleImageRepository articleImageRepository;
@@ -24,30 +23,30 @@ public class ArticleImageService {
         return articleImageRepository.findByArticleIdOrderByOrderAsc(articleId);
     }
 
-    public Optional<ArticleImage> getImageById(Long id) {
-        return articleImageRepository.findById(id);
+    public ArticleImage getImageById(Long id) {
+        return articleImageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Paveikslėlis nerastas, id = " + id));
     }
 
     public ArticleImage addImageToArticle(Long articleId, ArticleImage image) {
-        Optional<Article> articleOptional = articleService.getArticleById(articleId);
-        if (articleOptional.isPresent()) {
-            image.setArticle(articleOptional.get());
-            return articleImageRepository.save(image);
-        }
-        return null; // Arba galima mesti išimtį
+        Article article = articleService.getArticleById(articleId);
+        image.setArticle(article);
+        return articleImageRepository.save(image);
     }
 
     public ArticleImage updateImage(Long id, ArticleImage updatedImage) {
-        return articleImageRepository.findById(id)
-                .map(image -> {
-                    updatedImage.setId(id);
-                    updatedImage.setArticle(image.getArticle()); // Išlaikome ryšį su straipsniu
-                    return articleImageRepository.save(updatedImage);
-                })
-                .orElse(null); // Arba galima mesti išimtį
+        ArticleImage existingImage = articleImageRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Paveikslėlis nerastas, id = " + id));
+
+        updatedImage.setId(id);
+        updatedImage.setArticle(existingImage.getArticle()); // išlaikome ryšį
+        return articleImageRepository.save(updatedImage);
     }
 
     public void deleteImage(Long id) {
+        if (!articleImageRepository.existsById(id)) {
+            throw new IllegalArgumentException("Paveikslėlis nerastas, id = " + id);
+        }
         articleImageRepository.deleteById(id);
     }
 
@@ -55,6 +54,4 @@ public class ArticleImageService {
     public void deleteImagesByArticleId(Long articleId) {
         articleImageRepository.deleteByArticleId(articleId);
     }
-
-    // Papildoma logika paveikslėlių valdymui (pvz., tvarkymas pagal eilės numerį)
 }

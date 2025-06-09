@@ -24,30 +24,30 @@ public class ArticleVideoService {
         return articleVideoRepository.findByArticleIdOrderByOrderAsc(articleId);
     }
 
-    public Optional<ArticleVideo> getVideoById(Long id) {
-        return articleVideoRepository.findById(id);
+    public ArticleVideo getVideoById(Long id) {
+        return articleVideoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Video nerastas, id = " + id));
     }
 
     public ArticleVideo addVideoToArticle(Long articleId, ArticleVideo video) {
-        Optional<Article> articleOptional = articleService.getArticleById(articleId);
-        if (articleOptional.isPresent()) {
-            video.setArticle(articleOptional.get());
-            return articleVideoRepository.save(video);
-        }
-        return null; // Arba galima mesti išimtį
+        Article article = articleService.getArticleById(articleId);
+        video.setArticle(article);
+        return articleVideoRepository.save(video);
     }
 
     public ArticleVideo updateVideo(Long id, ArticleVideo updatedVideo) {
-        return articleVideoRepository.findById(id)
-                .map(video -> {
-                    updatedVideo.setId(id);
-                    updatedVideo.setArticle(video.getArticle()); // Išlaikome ryšį su straipsniu
-                    return articleVideoRepository.save(updatedVideo);
-                })
-                .orElse(null); // Arba galima mesti išimtį
+        ArticleVideo existingVideo = articleVideoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Video nerastas, id = " + id));
+
+        updatedVideo.setId(id);
+        updatedVideo.setArticle(existingVideo.getArticle()); // išlaikome ryšį su straipsniu
+        return articleVideoRepository.save(updatedVideo);
     }
 
     public void deleteVideo(Long id) {
+        if (!articleVideoRepository.existsById(id)) {
+            throw new IllegalArgumentException("Video nerastas, id = " + id);
+        }
         articleVideoRepository.deleteById(id);
     }
 
@@ -55,6 +55,4 @@ public class ArticleVideoService {
     public void deleteVideosByArticleId(Long articleId) {
         articleVideoRepository.deleteByArticleId(articleId);
     }
-
-    // Papildoma logika video valdymui (pvz., tvarkymas pagal eilės numerį)
 }
