@@ -1,16 +1,16 @@
 package lt.ziniumanas.controller.admin;
 
+import jakarta.validation.Valid;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -64,25 +64,23 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return "admin/ai-metrics";
     }
 
-    @PostMapping("/add-single")
-    @ResponseBody
-    public ResponseEntity<String> addSingleTrainingData(
-            @RequestParam("text") String text,
-            @RequestParam("category") String category) {
-        try {
-            log.info("Gautas vienas įrašas: tekstas='{}', kategorija='{}'", text, category);
-            ArticleCategorizationAIModelTrainingDto dto = new ArticleCategorizationAIModelTrainingDto();
-            dto.setTexts(List.of(text));
-            dto.setLabels(List.of(category));
-            trainingService.handleTrainingData(dto);
-            return ResponseEntity.ok("Įrašas sėkmingai pridėtas.");
-        } catch (IllegalArgumentException e) {
-            log.warn("Blogi duomenys: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            log.error("Įrašymo klaida: {}", e.getMessage(), e);
-            return ResponseEntity.status(500).body("Nepavyko pridėti įrašo: " + e.getMessage());
+    @PostMapping
+    public String addTrainingData(
+            @Valid @ModelAttribute("trainingDto") ArticleCategorizationAIModelTrainingDto dto,
+            BindingResult bindingResult,
+            Model model) {
+
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("categories", trainingService.getValidCategories());
+            model.addAttribute("message", "Neteisingi duomenys");
+            model.addAttribute("messageType", "danger");
+            return "admin/ai-training";
         }
+
+        trainingService.handleTrainingData(dto);
+        model.addAttribute("message", "Įrašas pridėtas!");
+        model.addAttribute("messageType", "success");
+        return "redirect:/admin/ai-training"; // arba grąžinti tą pačią formą su švariais laukais
     }
 
     @PostMapping("/train")

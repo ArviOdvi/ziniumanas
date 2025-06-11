@@ -1,8 +1,10 @@
 package lt.ziniumanas.service.ai_service;
 
+import lt.ziniumanas.dto.AiArticleCategorizationDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.ziniumanas.config.ClassificationApiProperties;
+import lt.ziniumanas.model.Article;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,22 +29,23 @@ public class AiArticleCategorizationService {
         this.classificationApiProperties = classificationApiProperties;
     }
 
-    public String categorizeArticle(String articleText) {
-        if (articleText == null || articleText.trim().isEmpty()) {
-            logger.warn("Tuščias straipsnio tekstas, grąžinama numatytoji kategorija");
-            return "Nežinoma";
+    public void assignCategory(Article article) {
+        if (article == null || article.getContents() == null || article.getContents().trim().isEmpty()) {
+            logger.warn("Straipsnis arba jo turinys tuščias – kategorija nepriskirta");
+            article.setArticleCategory("Nežinoma");
+            return;
         }
 
         try {
-            // JSON objektas
-            String jsonRequest = objectMapper.writeValueAsString(new TextRequest(articleText));
+            String jsonRequest = objectMapper.writeValueAsString(new AiArticleCategorizationDto(article.getContents()));
 
-            // URL paimtas is properties
             URL url = new URL(classificationApiProperties.getUrl());
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
+            connection.setConnectTimeout(5000); // rekomenduojama
+            connection.setReadTimeout(5000);
             connection.setDoOutput(true);
 
             try (OutputStream os = connection.getOutputStream()) {
@@ -53,33 +56,17 @@ public class AiArticleCategorizationService {
             JsonNode responseJson = objectMapper.readTree(connection.getInputStream());
             String category = responseJson.has("label") ? responseJson.get("label").asText() : "Nežinoma";
 
-            logger.info("Straipsnis kategorizuotas kaip: {}", category);
-            return category;
+            logger.info("AI priskyrė kategoriją: {}", category);
+            article.setArticleCategory(category);
 
         } catch (Exception e) {
             logger.error("Klaida jungiantis prie Python klasifikatoriaus: {}", e.getMessage(), e);
-            return "Nežinoma";
+            article.setArticleCategory("Nežinoma");
         }
     }
 
     @PreDestroy
     public void close() {
         logger.info("ArticleCategorizationServicebyAI ruošiasi uždarymui");
-    }
-
-    static class TextRequest {
-        public String text;
-
-        public TextRequest(String text) {
-            this.text = text;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public void setText(String text) {
-            this.text = text;
-        }
     }
 }

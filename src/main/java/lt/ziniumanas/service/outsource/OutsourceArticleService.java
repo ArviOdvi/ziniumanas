@@ -100,7 +100,6 @@ public class OutsourceArticleService {
 
                     boolean exists = articleRepository.findByArticleNameAndArticleDate(title, date).isPresent();
                     if (!exists) {
-                        String category = aiArticleCategorizationService.categorizeArticle(content);
                         Article article = Article.builder()
                                 .articleName(title)
                                 .articleDate(date)
@@ -108,12 +107,13 @@ public class OutsourceArticleService {
                                 .verificationStatus(false)
                                 .contents(content)
                                 .newsSource(source)
-                                .articleCategory(category)
                                 .build();
+
+                        aiArticleCategorizationService.assignCategory(article);
 
                         try {
                             articleRepository.save(article);
-                            logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, category);
+                            logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, article.getArticleCategory());
                         } catch (DataIntegrityViolationException e) {
                             logger.warn("⚠️ Straipsnis jau įrašytas (unikalumo apribojimas): {}", title);
                         }

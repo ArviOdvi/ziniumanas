@@ -55,28 +55,18 @@ public class AdminArticleCategorizationAIModelTrainingService {
     }
 
     public void handleTrainingData(ArticleCategorizationAIModelTrainingDto dto) {
-        List<String> texts = dto.getTexts();
-        List<String> labels = dto.getLabels();
         List<String> validCategories = getValidCategories();
 
-        if (texts.size() != labels.size()) {
-            throw new IllegalArgumentException("Tekstų ir kategorijų skaičius nesutampa.");
+        if (!validCategories.contains(dto.getLabel())) {
+            throw new IllegalArgumentException("Neleistina kategorija: " + dto.getLabel());
         }
 
-        for (String label : labels) {
-            if (!validCategories.contains(label)) {
-                throw new IllegalArgumentException("Neleistina kategorija: " + label);
-            }
-        }
-
-        for (int i = 0; i < texts.size(); i++) {
-            AiCategorizationTrainingData data = AiCategorizationTrainingData.builder()
-                    .text(texts.get(i))
-                    .category(labels.get(i))
-                    .build();
-            aiTrainingDataRepository.save(data);
-            log.info("Įrašytas įrašas: tekstas='{}', kategorija='{}'", texts.get(i), labels.get(i));
-        }
+        AiCategorizationTrainingData data = AiCategorizationTrainingData.builder()
+                .text(dto.getText())
+                .category(dto.getLabel())
+                .build();
+        aiTrainingDataRepository.save(data);
+        log.info("Įrašytas įrašas: tekstas='{}', kategorija='{}'", dto.getText(), dto.getLabel());
     }
 
     public void trainModel() throws Exception {
