@@ -1,14 +1,14 @@
-package lt.ziniumanas.util;
+package lt.ziniumanas.model;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PendingArticleUrlTableSequenceResetUtil {
+public class PendingArticleUrlTableSequenceReset {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public PendingArticleUrlTableSequenceResetUtil(JdbcTemplate jdbcTemplate) {
+    public PendingArticleUrlTableSequenceReset(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 

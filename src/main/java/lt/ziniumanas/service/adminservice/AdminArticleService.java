@@ -1,28 +1,20 @@
 package lt.ziniumanas.service.adminservice;
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.repository.ArticleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AdminArticleService {
     private final ArticleRepository articleRepository;
 
-    @Autowired
-    public AdminArticleService(ArticleRepository articleRepository) {
-        this.articleRepository = articleRepository;
-    }
-
     public List<Article> getAllArticles() {
         return articleRepository.findAll();
-    }
-
-    public Optional<Article> getArticleById(Long id) {
-        return articleRepository.findById(id);
     }
 
     public Article createArticle(Article article) {

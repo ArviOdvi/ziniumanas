@@ -1,37 +1,43 @@
 package lt.ziniumanas.service.ai_service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.dto.AiArticleCategorizationDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lt.ziniumanas.config.ClassificationApiProperties;
 import lt.ziniumanas.model.Article;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PreDestroy;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
-
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AiArticleCategorizationService {
-    private static final Logger logger = LoggerFactory.getLogger(AiArticleCategorizationService.class);
 
     private final ObjectMapper objectMapper;
     private final ClassificationApiProperties classificationApiProperties;
 
-    public AiArticleCategorizationService(ObjectMapper objectMapper,
-                                          ClassificationApiProperties classificationApiProperties) {
-        this.objectMapper = objectMapper;
-        this.classificationApiProperties = classificationApiProperties;
-    }
-
     public void assignCategory(Article article) {
         if (article == null || article.getContents() == null || article.getContents().trim().isEmpty()) {
-            logger.warn("Straipsnis arba jo turinys tuščias – kategorija nepriskirta");
+            log.debug("⚠️ Straipsnis arba jo turinys tuščias – kategorija nepriskirta");
+            if (article == null) {
+                log.debug("⚠️ Straipsnis yra null – kategorija nepriskirta");
+                return;
+            }
+
+            if (article.getContents() == null || article.getContents().trim().isEmpty()) {
+                log.debug("⚠️ Straipsnio turinys tuščias – kategorija nepriskirta");
+                article.setArticleCategory("Nežinoma");
+                return;
+            }
             article.setArticleCategory("Nežinoma");
             return;
         }
@@ -39,14 +45,7 @@ public class AiArticleCategorizationService {
         try {
             String jsonRequest = objectMapper.writeValueAsString(new AiArticleCategorizationDto(article.getContents()));
 
-            URL url = new URL(classificationApiProperties.getUrl());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setConnectTimeout(5000); // rekomenduojama
-            connection.setReadTimeout(5000);
-            connection.setDoOutput(true);
+            HttpURLConnection connection = createConnection(classificationApiProperties.getUrl());
 
             try (OutputStream os = connection.getOutputStream()) {
                 byte[] input = jsonRequest.getBytes(StandardCharsets.UTF_8);
@@ -56,17 +55,28 @@ public class AiArticleCategorizationService {
             JsonNode responseJson = objectMapper.readTree(connection.getInputStream());
             String category = responseJson.has("label") ? responseJson.get("label").asText() : "Nežinoma";
 
-            logger.info("AI priskyrė kategoriją: {}", category);
+            log.debug("✅ AI priskyrė kategoriją: {}", category);
             article.setArticleCategory(category);
 
         } catch (Exception e) {
-            logger.error("Klaida jungiantis prie Python klasifikatoriaus: {}", e.getMessage(), e);
+            log.debug("❌ Klaida jungiantis prie Python klasifikatoriaus: {}", e.getMessage(), e);
             article.setArticleCategory("Nežinoma");
         }
+    }
+    private HttpURLConnection createConnection(String urlString) throws IOException {
+        URI uri = URI.create(urlString);
+        URL url = uri.toURL();
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty("Content-Type", "application/json");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+        connection.setDoOutput(true);
+        return connection;
     }
 
     @PreDestroy
     public void close() {
-        logger.info("ArticleCategorizationServicebyAI ruošiasi uždarymui");
+        log.debug("⚠️ ArticleCategorizationServicebyAI ruošiasi uždarymui");
     }
 }

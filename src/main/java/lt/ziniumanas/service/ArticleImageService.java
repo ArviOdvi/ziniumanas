@@ -1,5 +1,6 @@
 package lt.ziniumanas.service;
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.ArticleImage;
 import lt.ziniumanas.repository.ArticleImageRepository;
@@ -9,15 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 @Service
+@RequiredArgsConstructor
 public class ArticleImageService {
     private final ArticleImageRepository articleImageRepository;
     private final ArticleService articleService;
-
-    @Autowired
-    public ArticleImageService(ArticleImageRepository articleImageRepository, ArticleService articleService) {
-        this.articleImageRepository = articleImageRepository;
-        this.articleService = articleService;
-    }
 
     public List<ArticleImage> getImagesByArticleId(Long articleId) {
         return articleImageRepository.findByArticleIdOrderByOrderAsc(articleId);

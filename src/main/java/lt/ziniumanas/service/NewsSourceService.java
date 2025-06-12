@@ -1,6 +1,7 @@
 package lt.ziniumanas.service;
 //Pagrindiniai aplikacijos veiksmai ir taisykles. Naudoja repozitorijas duomenims pasiekti ir manipuliuoti.
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.NewsSource;
 import lt.ziniumanas.repository.NewsSourceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,13 +10,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 @Service
+@RequiredArgsConstructor
 public class NewsSourceService {
     private final NewsSourceRepository newsSourceRepository;
-
-    @Autowired
-    public NewsSourceService(NewsSourceRepository newsSourceRepository) {
-        this.newsSourceRepository = newsSourceRepository;
-    }
 
     public List<NewsSource> getAllNewsSources() {
         return newsSourceRepository.findAll();

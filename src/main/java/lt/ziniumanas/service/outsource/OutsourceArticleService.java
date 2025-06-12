@@ -1,12 +1,13 @@
 package lt.ziniumanas.service.outsource;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.NewsSource;
 import lt.ziniumanas.model.ArticlePendingUrl;
 import lt.ziniumanas.model.ArticleScrapingRule;
 import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
-import lt.ziniumanas.repository.NewsSourceRepository;
 import lt.ziniumanas.repository.ArticlePendingUrlRepository;
 import lt.ziniumanas.repository.ArticleScrapingRuleRepository;
 import lt.ziniumanas.service.ai_service.AiArticleCategorizationService;
@@ -14,44 +15,40 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class OutsourceArticleService {
-    private static final Logger logger = LoggerFactory.getLogger(OutsourceArticleService.class);
 
-    @Autowired private ArticleRepository articleRepository;
-    @Autowired private NewsSourceRepository newsSourceRepository;
-    @Autowired private ArticlePendingUrlRepository pendingUrlRepository;
-    @Autowired private ArticleScrapingRuleRepository scrapingRuleRepository;
-    @Autowired private AiArticleCategorizationService aiArticleCategorizationService;
+    private final ArticleRepository articleRepository;
+    private final ArticlePendingUrlRepository pendingUrlRepository;
+    private final ArticleScrapingRuleRepository scrapingRuleRepository;
+    private final AiArticleCategorizationService aiArticleCategorizationService;
 
     @EventListener(ApplicationReadyEvent.class)
     public void onStart() {
-        logger.info("🚀 Pradedamas straipsnių apdorojimas aplikacijos paleidimo metu...");
+        log.debug("🚀 Pradedamas straipsnių apdorojimas aplikacijos paleidimo metu...");
         collectArticlesFromSources();
     }
 
     @Scheduled(fixedRate = 30 * 60 * 1000)
     @Async
     public void scheduledCollection() {
-        logger.info("🕒 Periodinis straipsnių apdorojimas kas 30 min...");
+        log.debug("🕒 Periodinis straipsnių apdorojimas kas 30 min...");
         collectArticlesFromSources();
     }
 
@@ -75,26 +72,26 @@ public class OutsourceArticleService {
 
                     Element dateElement = doc.selectFirst(rule.getDateSelector());
                     if (dateElement == null) {
-                        logger.warn("⚠️ Nerasta data pagal selektorių '{}' URL: {}", rule.getDateSelector(), pending.getUrl());
+                        log.debug("⚠️ Nerasta data pagal selektorių '{}' URL: {}", rule.getDateSelector(), pending.getUrl());
                         continue;
                     }
 
                     String dateString = dateElement.text().trim();
                     LocalDateTime dateTime = parseDate(dateString);
                     if (dateTime == null) {
-                        logger.warn("⚠️ Nepavyko interpretuoti datos '{}' URL: {}", dateString, pending.getUrl());
+                        log.debug("⚠️ Nepavyko interpretuoti datos '{}' URL: {}", dateString, pending.getUrl());
                         continue;
                     }
 
                     LocalDate date = dateTime.toLocalDate();
                     if (!date.equals(LocalDate.now())) {
-                        logger.debug("📅 Praleista – straipsnio data {} nesutampa su šiandienos {}", date, LocalDate.now());
+                        log.debug("⚠️ Praleista – straipsnio data {} nesutampa su šiandienos {}", date, LocalDate.now());
                         continue;
                     }
 
                     String content = extractArticleContent(doc, rule, pending.getUrl());
                     if (content.isEmpty()) {
-                        logger.warn("⚠️ Tuščias turinys URL: {}", pending.getUrl());
+                        log.debug("⚠️ Tuščias turinys URL: {}", pending.getUrl());
                         continue;
                     }
 
@@ -113,16 +110,16 @@ public class OutsourceArticleService {
 
                         try {
                             articleRepository.save(article);
-                            logger.info("💾 Išsaugotas straipsnis: {} (Kategorija: {})", title, article.getArticleCategory());
+                            log.debug("✅ Išsaugotas straipsnis: {} (Kategorija: {})", title, article.getArticleCategory());
                         } catch (DataIntegrityViolationException e) {
-                            logger.warn("⚠️ Straipsnis jau įrašytas (unikalumo apribojimas): {}", title);
+                            log.debug("⚠️ Straipsnis jau įrašytas (unikalumo apribojimas): {}", title);
                         }
                     } else {
-                        logger.debug("📑 Straipsnis '{}' jau egzistuoja, praleidžiamas", title);
+                        log.debug("⚠️ Straipsnis '{}' jau egzistuoja, praleidžiamas", title);
                     }
 
                 } catch (Exception e) {
-                    logger.error("❌ Klaida apdorojant URL '{}': {}", pending.getUrl(), e.getMessage(), e);
+                    log.debug("❌ Klaida apdorojant URL '{}': {}", pending.getUrl(), e.getMessage(), e);
                 }
             }
         }
@@ -134,7 +131,7 @@ public class OutsourceArticleService {
                 ? doc.selectFirst(rule.getContentSelector()) : doc;
 
         if (containerElement == null) {
-            logger.warn("⚠️ Nerastas turinio konteineris pagal selektorių '{}' URL: {}", rule.getContentSelector(), url);
+            log.debug("⚠️ Nerastas turinio konteineris pagal selektorių '{}' URL: {}", rule.getContentSelector(), url);
             return "";
         }
 
@@ -170,7 +167,7 @@ public class OutsourceArticleService {
                 return LocalDateTime.parse(rawDate, formatter);
             } catch (DateTimeParseException ignored) {}
         }
-        logger.error("❗ Nepavyko konvertuoti datos su jokiu formatu: '{}'", rawDate);
+        log.error("⚠️ Nepavyko konvertuoti datos su jokiu formatu: '{}'", rawDate);
         return null;
     }
 

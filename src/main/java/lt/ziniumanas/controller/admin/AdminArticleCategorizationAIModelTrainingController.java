@@ -1,11 +1,10 @@
 package lt.ziniumanas.controller.admin;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,18 +12,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
+@Slf4j
 @Controller
+@RequiredArgsConstructor
 @RequestMapping("/admin/ai-training")
 public class AdminArticleCategorizationAIModelTrainingController {
-    private static final Logger log = LoggerFactory.getLogger(AdminArticleCategorizationAIModelTrainingController.class);
-
     private final AdminArticleCategorizationAIModelTrainingService trainingService;
-
-    @Autowired
-    public AdminArticleCategorizationAIModelTrainingController(
-            AdminArticleCategorizationAIModelTrainingService trainingService) {
-        this.trainingService = trainingService;
-    }
 
     @GetMapping
     public String showTrainingPage(Model model) {

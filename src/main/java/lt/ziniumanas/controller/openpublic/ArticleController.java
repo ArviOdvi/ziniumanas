@@ -1,7 +1,7 @@
 package lt.ziniumanas.controller.openpublic;
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
-import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.service.ArticleService;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,15 +9,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
-
+@RequiredArgsConstructor
 //Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
 @Controller
 public class  ArticleController {
     private final ArticleService articleService;
-
-    public ArticleController(ArticleService articleService) {
-        this.articleService = articleService;
-    }
 
     @GetMapping("/")
     public String showArticles(Model model) {

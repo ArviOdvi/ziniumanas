@@ -1,5 +1,6 @@
 package lt.ziniumanas.service;
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.Comment;
 import lt.ziniumanas.repository.CommentRepository;
@@ -11,15 +12,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
     private final ArticleService articleService;
-
-    @Autowired
-    public CommentService(CommentRepository commentRepository, ArticleService articleService) {
-        this.commentRepository = commentRepository;
-        this.articleService = articleService;
-    }
 
     public List<Comment> getCommentsByArticleId(Long articleId) {
         return commentRepository.findByArticleIdAndParentCommentIsNullOrderByCreatedAtAsc(articleId);

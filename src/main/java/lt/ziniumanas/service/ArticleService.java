@@ -1,21 +1,17 @@
 package lt.ziniumanas.service;
 //Pagrindiniai aplikacijos veiksmai ir taisykles. Naudoja repozitorijas duomenims pasiekti ir manipuliuoti.
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.exception.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.repository.ArticleRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 @Service
+@RequiredArgsConstructor
 public class ArticleService {
     private final ArticleRepository articleRepository;
-
-    @Autowired
-    public ArticleService(ArticleRepository articleRepository) {
-        this.articleRepository = articleRepository;
-    }
 
     public List<Article> getAllArticles() {
         return articleRepository.findAll();

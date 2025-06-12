@@ -1,12 +1,11 @@
 package lt.ziniumanas.service.adminservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.model.AiCategorizationTrainingData;
 import lt.ziniumanas.repository.AiTrainingDataRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
@@ -16,32 +15,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class AdminArticleCategorizationAIModelTrainingService {
-    private static final Logger log = LoggerFactory.getLogger(AdminArticleCategorizationAIModelTrainingService.class);
     private static final String BASE_PATH = System.getProperty("user.dir");
     private final AiTrainingDataRepository aiTrainingDataRepository;
-
-    @Autowired
-    public AdminArticleCategorizationAIModelTrainingService(AiTrainingDataRepository aiTrainingDataRepository) {
-        this.aiTrainingDataRepository = aiTrainingDataRepository;
-    }
 
     public long getTrainingDataCount() {
         try {
             return aiTrainingDataRepository.count();
         } catch (Exception e) {
-            log.error("Klaida gaunant treniravimo duomenų kiekį: {}", e.getMessage(), e);
+            log.debug("❌ Klaida gaunant treniravimo duomenų kiekį: {}", e.getMessage(), e);
             return 0;
-        }
-    }
-
-    public List<AiCategorizationTrainingData> getRecentTrainingData() {
-        try {
-            return aiTrainingDataRepository.findTop15ByOrderByCreatedAtDesc();
-        } catch (Exception e) {
-            log.error("Klaida gaunant naujausius treniravimo duomenis: {}", e.getMessage(), e);
-            return Collections.emptyList();
         }
     }
 
@@ -49,7 +35,7 @@ public class AdminArticleCategorizationAIModelTrainingService {
         try {
             return aiTrainingDataRepository.findAllByOrderByCreatedAtDesc();
         } catch (Exception e) {
-            log.error("Klaida gaunant visus treniravimo duomenis: {}", e.getMessage(), e);
+            log.debug("❌ Klaida gaunant visus treniravimo duomenis: {}", e.getMessage(), e);
             return Collections.emptyList();
         }
     }
@@ -58,7 +44,7 @@ public class AdminArticleCategorizationAIModelTrainingService {
         List<String> validCategories = getValidCategories();
 
         if (!validCategories.contains(dto.getLabel())) {
-            throw new IllegalArgumentException("Neleistina kategorija: " + dto.getLabel());
+            throw new IllegalArgumentException("⚠️ Neleistina kategorija: " + dto.getLabel());
         }
 
         AiCategorizationTrainingData data = AiCategorizationTrainingData.builder()
@@ -66,14 +52,14 @@ public class AdminArticleCategorizationAIModelTrainingService {
                 .category(dto.getLabel())
                 .build();
         aiTrainingDataRepository.save(data);
-        log.info("Įrašytas įrašas: tekstas='{}', kategorija='{}'", dto.getText(), dto.getLabel());
+        log.debug("✅ Įrašytas įrašas: tekstas='{}', kategorija='{}'", dto.getText(), dto.getLabel());
     }
 
     public void trainModel() throws Exception {
         List<AiCategorizationTrainingData> rows = aiTrainingDataRepository.findAll();
 
         if (rows.size() < 10) {
-            throw new RuntimeException("Per mažai įrašų modelio treniravimui. Reikalinga bent 10 įrašų, yra: " + rows.size());
+            throw new RuntimeException("❌ Klaida. Per mažai įrašų modelio treniravimui. Reikalinga bent 10 įrašų, yra: " + rows.size());
         }
 
         Collections.shuffle(rows);
@@ -95,7 +81,7 @@ public class AdminArticleCategorizationAIModelTrainingService {
 
         int exitCode = process.waitFor();
         if (exitCode != 0) {
-            throw new RuntimeException("Python modelio treniravimas nepavyko. Exit code: " + exitCode);
+            throw new RuntimeException("❌ Klaida. Python modelio treniravimas nepavyko. Exit code: " + exitCode);
         }
     }
 
@@ -128,8 +114,8 @@ public class AdminArticleCategorizationAIModelTrainingService {
             ObjectMapper objectMapper = new ObjectMapper();
             return objectMapper.readValue(jsonData, Map.class);
         } catch (Exception e) {
-            log.error("Nepavyko nuskaityti testavimo metrikų: {}", e.getMessage(), e);
-            throw new RuntimeException("Nepavyko nuskaityti testavimo metrikų: " + e.getMessage(), e);
+            log.debug("❌ Klaida. Nepavyko nuskaityti testavimo metrikų: {}", e.getMessage(), e);
+            throw new RuntimeException("❌ Klaida. Nepavyko nuskaityti testavimo metrikų: " + e.getMessage(), e);
         }
     }
 }

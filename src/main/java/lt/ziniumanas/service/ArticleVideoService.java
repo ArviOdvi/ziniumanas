@@ -1,24 +1,18 @@
 package lt.ziniumanas.service;
 
+import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.ArticleVideo;
 import lt.ziniumanas.repository.ArticleVideoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 @Service
+@RequiredArgsConstructor
 public class ArticleVideoService {
     private final ArticleVideoRepository articleVideoRepository;
     private final ArticleService articleService;
-
-    @Autowired
-    public ArticleVideoService(ArticleVideoRepository articleVideoRepository, ArticleService articleService) {
-        this.articleVideoRepository = articleVideoRepository;
-        this.articleService = articleService;
-    }
 
     public List<ArticleVideo> getVideosByArticleId(Long articleId) {
         return articleVideoRepository.findByArticleIdOrderByOrderAsc(articleId);
