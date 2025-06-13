@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="lt" xmlns:th="http://www.thymeleaf.org">
-<th:block th:replace="fragments/head :: head('Ziniumanas - Naujienos')"></th:block>
+<th:block th:replace="~{fragments/head :: head('Ziniumanas - Naujienos')}"/>
 <body class="d-flex flex-column min-vh-100 overflow-hidden">
 
 <!-- HEADER fragmentas -->
@@ -10,7 +10,14 @@
 
 <main class="container overflow-auto px-3"
       style="margin-top: 100px; padding-bottom: 100px; max-height: calc(100vh - 165px); z-index: 4;">
-    <article>
+
+    <!-- Klaidos pranešimas -->
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+        Straipsnio klaida
+    </div>
+
+    <!-- Tik jeigu straipsnis yra -->
+    <article th:if="${article != null}">
         <h1 th:text="${article.articleName}">Straipsnio pavadinimas</h1>
         <div class="text-muted small mb-3">
             Paskelbta: <span th:text="${article.articleDate}">2025-04-26</span>

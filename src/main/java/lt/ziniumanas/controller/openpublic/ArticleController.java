@@ -9,6 +9,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.Optional;
+
 @RequiredArgsConstructor
 //Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
 @Controller
@@ -22,11 +24,18 @@ public class  ArticleController {
         return "index";
     }
     @GetMapping("/straipsnis/{id}")
-    public String showSingleArticle(@PathVariable Long id, Model model) {
-        Article article = articleService.getArticleById(id);
-        model.addAttribute("article", article);
-        return "single-article"; // šablonas atvaizduos vieną straipsnį
+    public String getArticle(@PathVariable Long id, Model model) {
+        Optional<Article> optionalArticle = articleService.findById(id);
+
+        if (optionalArticle.isEmpty()) {
+            model.addAttribute("errorMessage", "Straipsnis nerastas, ID: " + id);
+            model.addAttribute("article", null);
+            return "single-article";
+        }
+        model.addAttribute("article", optionalArticle.get());
+        return "single-article";
     }
+
     @GetMapping("/kategorija/{category}")
     public String getArticlesByCategory(@PathVariable String category, Model model) {
         List<Article> articles = articleService.getArticlesByCategory(category);

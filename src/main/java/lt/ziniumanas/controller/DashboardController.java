@@ -1,4 +1,4 @@
-package lt.ziniumanas.controller.admin;
+package lt.ziniumanas.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

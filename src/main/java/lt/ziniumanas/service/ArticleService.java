@@ -2,12 +2,15 @@ package lt.ziniumanas.service;
 //Pagrindiniai aplikacijos veiksmai ir taisykles. Naudoja repozitorijas duomenims pasiekti ir manipuliuoti.
 
 import lombok.RequiredArgsConstructor;
-import lt.ziniumanas.exception.ArticleNotFoundException;
+import lt.ziniumanas.error.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
+import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
@@ -19,6 +22,10 @@ public class ArticleService {
 
     public List<Article> getArticlesByCategory(String category) {
         return articleRepository.findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(category);
+    }
+
+    public Optional<Article> findById(Long id) {
+        return articleRepository.findById(id);
     }
 
     public Article getArticleById(Long id) {
