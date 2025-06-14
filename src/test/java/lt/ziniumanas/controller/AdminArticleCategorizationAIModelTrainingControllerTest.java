@@ -1,13 +1,13 @@
 package lt.ziniumanas.controller;
+
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
+import lt.ziniumanas.testconfig.MockAdminArticleCategorizationAIModelTrainingServiceConfig;
+import lt.ziniumanas.testconfig.TestSecurityConfig;
 import lt.ziniumanas.util.HttpEndpoint;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,7 +20,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AdminArticleCategorizationAIModelTrainingController.class)
-@Import(AdminArticleCategorizationAIModelTrainingControllerTest.MockServiceConfig.class)
+@Import({
+        MockAdminArticleCategorizationAIModelTrainingServiceConfig.class,
+        TestSecurityConfig.class
+})
 public class AdminArticleCategorizationAIModelTrainingControllerTest {
 
     @Autowired
@@ -28,18 +31,6 @@ public class AdminArticleCategorizationAIModelTrainingControllerTest {
 
     @Autowired
     private AdminArticleCategorizationAIModelTrainingService trainingService;
-
-    @TestConfiguration
-    static class MockServiceConfig {
-        @Bean
-        AdminArticleCategorizationAIModelTrainingService trainingService() {
-            return Mockito.mock(AdminArticleCategorizationAIModelTrainingService.class);
-        }
-    }
-
-    // --------------------------------------------
-    // GET endpoint testai
-    // --------------------------------------------
 
     @Test
     void testShowTrainingPageWithNoData() throws Exception {
@@ -82,10 +73,6 @@ public class AdminArticleCategorizationAIModelTrainingControllerTest {
                 .andExpect(model().attributeExists("metrics"));
     }
 
-    // --------------------------------------------
-    // POST /train (modelio treniravimas)
-    // --------------------------------------------
-
     @Test
     void testTrainModelDirectlySuccess() throws Exception {
         doNothing().when(trainingService).trainModel();
@@ -104,12 +91,22 @@ public class AdminArticleCategorizationAIModelTrainingControllerTest {
                 .andExpect(content().string("Klaida: Treniravimo klaida"));
     }
 
-    // --------------------------------------------
-    // POST /admin/ai-training (formos validacija)
-    // --------------------------------------------
+    @Test
+    void testAddTrainingData_InvalidInput_ShouldReturnFormWithErrors() throws Exception {
+        mockMvc.perform(post(HttpEndpoint.ADMIN_AI_TRAINING)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("text", "")
+                        .param("label", ""))
+                .andExpect(status().isOk())
+                .andExpect(view().name(HttpEndpoint.VIEW_AI_TRAINING))
+                .andExpect(model().attributeHasFieldErrors("trainingDto", "text", "label"))
+                .andExpect(model().attributeExists("categories", "message", "messageType"));
+    }
 
     @Test
     void testAddTrainingData_ValidInput_ShouldRedirectAndCallService() throws Exception {
+        reset(trainingService); // svarbu – kad būtų švarus mock’as
+
         doNothing().when(trainingService).handleTrainingData(any(ArticleCategorizationAIModelTrainingDto.class));
 
         mockMvc.perform(post(HttpEndpoint.ADMIN_AI_TRAINING)
@@ -135,4 +132,5 @@ public class AdminArticleCategorizationAIModelTrainingControllerTest {
                 .andExpect(flash().attribute("message", "Įrašas pridėtas!"))
                 .andExpect(flash().attribute("messageType", "success"));
     }
+
 }

@@ -19,9 +19,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 @RequestMapping(HttpEndpoint.ADMIN_AI_TRAINING)
 public class AdminArticleCategorizationAIModelTrainingController {
+
     private final AdminArticleCategorizationAIModelTrainingService trainingService;
 
-    @GetMapping
+    @GetMapping("")
     public String showTrainingPage(Model model) {
         model.addAttribute("trainingDto", new ArticleCategorizationAIModelTrainingDto());
         model.addAttribute("categories", trainingService.getValidCategories());
@@ -34,21 +35,21 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return HttpEndpoint.VIEW_AI_TRAINING;
     }
 
-    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_DATA)
+    @GetMapping("/data")
     public String showTrainingData(Model model) {
         model.addAttribute("trainingData", trainingService.getAllTrainingData());
         model.addAttribute("categories", trainingService.getValidCategories());
         return HttpEndpoint.VIEW_AI_TRAINING_DATA;
     }
 
-    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_DATA_INFO)
+    @GetMapping("/data-info")
     @ResponseBody
     public String trainingDataInfo() {
         long count = trainingService.getTrainingDataCount();
         return "Šiuo metu treniravimo duomenų bazėje yra " + count + " įrašų.";
     }
 
-    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_METRICS)
+    @GetMapping("/metrics")
     public String showTestMetrics(Model model) {
         try {
             Map<String, Object> metrics = trainingService.getTestMetrics();
@@ -59,7 +60,7 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return HttpEndpoint.VIEW_AI_TRAINING_METRICS;
     }
 
-    @PostMapping
+    @PostMapping("")
     public String addTrainingData(
             @Valid @ModelAttribute("trainingDto") ArticleCategorizationAIModelTrainingDto dto,
             BindingResult bindingResult,
@@ -76,10 +77,10 @@ public class AdminArticleCategorizationAIModelTrainingController {
         trainingService.handleTrainingData(dto);
         redirectAttributes.addFlashAttribute("message", "Įrašas pridėtas!");
         redirectAttributes.addFlashAttribute("messageType", "success");
-        return "redirect:" + HttpEndpoint.ADMIN_AI_TRAINING; // arba grąžinti tą pačią formą su švariais laukais
+        return "redirect:" + HttpEndpoint.ADMIN_AI_TRAINING;
     }
 
-    @PostMapping(HttpEndpoint.ADMIN_AI_TRAINING_TRAIN)
+    @PostMapping("/train")
     @ResponseBody
     public String trainModelDirectly() {
         try {
