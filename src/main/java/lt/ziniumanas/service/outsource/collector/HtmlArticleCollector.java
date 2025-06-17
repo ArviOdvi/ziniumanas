@@ -120,9 +120,13 @@ public class HtmlArticleCollector implements ArticleCollector {
     }
 
     private LocalDateTime parseDate(String rawDate) {
+        rawDate = rawDate.replace('\u00A0', ' ').trim();
         List<String> patterns = List.of(
-                "yyyy.MM.dd HH:mm", "yyyy-MM-dd HH:mm", "dd MMMM yyyy HH:mm",
-                "yyyy-MM-dd'T'HH:mm:ss", "EEE, dd MMM yyyy HH:mm:ss Z"
+                "yyyy.MM.dd HH:mm", "yyyy.MM.dd  HH:mm", "yyyy.MM.ddHH:mm",
+                "yyyy MM dd / HH:mm", // šis tau reikalingas
+                "yyyy-MM-dd HH:mm", "yyyy/MM/dd HH:mm",
+                "yyyy-MM-dd HH:mm:ss", "dd MMMM yyyy HH:mm", "dd MMM yyyy HH:mm",
+                "yyyy MMMM dd"
         );
 
         for (String pattern : patterns) {
@@ -131,7 +135,7 @@ public class HtmlArticleCollector implements ArticleCollector {
             } catch (DateTimeParseException ignored) {}
         }
 
-        log.debug("❗ Nepavyko interpretuoti datos: '{}'", rawDate);
+        log.warn("❗ Nepavyko konvertuoti datos: '{}'", rawDate);
         return null;
     }
 

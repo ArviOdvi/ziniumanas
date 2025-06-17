@@ -42,8 +42,8 @@ public class OutsourceArticleService {
     }
 
     private void collectAllArticles() {
-        log.debug("📄 Pradedamas HTML straipsnių surinkimas");
-        htmlCollector.collectArticles();
+//        log.debug("📄 Pradedamas HTML straipsnių surinkimas");
+//        htmlCollector.collectArticles();
 
         log.debug("📰 Pradedamas RSS straipsnių surinkimas");
         rssCollector.collectArticles();

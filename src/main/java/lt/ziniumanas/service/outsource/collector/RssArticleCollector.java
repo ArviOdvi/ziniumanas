@@ -4,15 +4,23 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.model.*;
 import lt.ziniumanas.model.enums.ArticleStatus;
-import lt.ziniumanas.repository.*;
+import lt.ziniumanas.repository.ArticlePendingUrlRepository;
+import lt.ziniumanas.repository.ArticleRepository;
+import lt.ziniumanas.repository.NewsSourceRepository;
 import lt.ziniumanas.service.ai_service.AiArticleCategorizationService;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Component;
-import org.w3c.dom.*;
-import javax.xml.parsers.DocumentBuilderFactory;
+
 import java.net.URL;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+
+
 
 @Slf4j
 @Component
@@ -20,63 +28,84 @@ import java.util.List;
 public class RssArticleCollector implements ArticleCollector{
 
     private final ArticleRepository articleRepository;
-    private final ArticlePendingUrlRepository pendingUrlRepository;
-    private final ArticleScrapingRuleRepository scrapingRuleRepository;
     private final AiArticleCategorizationService aiService;
+    private final NewsSourceRepository newsSourceRepository;
+
+    private static final List<String> RSS_FEEDS = List.of(
+            "https://kurjeris.lt/feed/"
+            // Galima pridėti daugiau šaltinių čia
+    );
 
     @Override
     public void collectArticles() {
-        List<ArticlePendingUrl> pendingUrls = pendingUrlRepository.findAll();
-
-        for (ArticlePendingUrl pending : pendingUrls) {
-            try {
-                URL feedUrl = new URL(pending.getUrl());
-                Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(feedUrl.openStream());
-                NodeList items = doc.getElementsByTagName("item");
-
-                for (int i = 0; i < items.getLength(); i++) {
-                    Element item = (Element) items.item(i);
-                    String title = getTextContent(item, "title");
-                    String link = getTextContent(item, "link");
-                    String pubDate = getTextContent(item, "pubDate");
-                    String description = getTextContent(item, "description");
-
-                    LocalDate articleDate = parsePubDate(pubDate);
-                    if (!articleDate.equals(LocalDate.now())) continue;
-
-                    boolean exists = articleRepository.findByArticleNameAndArticleDate(title, articleDate).isPresent();
-                    if (!exists) {
-                        Article article = Article.builder()
-                                .articleName(title)
-                                .articleDate(articleDate)
-                                .contents(description)
-                                .articleStatus(ArticleStatus.DRAFT)
-                                .verificationStatus(false)
-                                .newsSource(pending.getNewsSource())
-                                .build();
-
-                        aiService.assignCategory(article);
-                        articleRepository.save(article);
-                        log.debug("📰 Įrašytas RSS straipsnis: {}", title);
-                    }
-                }
-            } catch (Exception e) {
-                log.debug("❌ Nepavyko apdoroti RSS URL '{}': {}", pending.getUrl(), e.getMessage());
-            }
+        for (String url : RSS_FEEDS) {
+            collectFromFeed(url);
         }
     }
 
-    private String getTextContent(Element parent, String tag) {
-        NodeList nodes = parent.getElementsByTagName(tag);
-        return nodes.getLength() > 0 ? nodes.item(0).getTextContent().trim() : "";
+    private void collectFromFeed(String feedUrl) {
+        try {
+            Document doc = Jsoup.connect(feedUrl)
+                    .userAgent("Mozilla/5.0")
+                    .timeout(10000)
+                    .parser(org.jsoup.parser.Parser.xmlParser())
+                    .get();
+
+            Elements items = doc.select("item");
+            log.debug("🔍 Rasta {} RSS įrašų iš {}", items.size(), feedUrl);
+
+            for (Element item : items) {
+                String title = item.selectFirst("title") != null ? item.selectFirst("title").text() : "";
+                String pubDate = item.selectFirst("pubDate") != null ? item.selectFirst("pubDate").text() : "";
+                String content = item.selectFirst("content|encoded") != null ?
+                        item.selectFirst("content|encoded").text() :
+                        item.selectFirst("description") != null ? item.selectFirst("description").text() : "";
+
+                LocalDate articleDate = parsePubDate(pubDate);
+                if (!articleDate.equals(LocalDate.now())) continue;
+
+                boolean exists = articleRepository.findByArticleNameAndArticleDate(title, articleDate).isPresent();
+                if (!exists) {
+                    Article article = Article.builder()
+                            .articleName(title)
+                            .articleDate(articleDate)
+                            .contents(content)
+                            .articleStatus(ArticleStatus.DRAFT)
+                            .verificationStatus(false)
+                            .articleCategory("Nežinoma")
+                            .newsSource(getDefaultNewsSource())
+                            .build();
+
+                    aiService.assignCategory(article);
+                    articleRepository.save(article);
+                    log.info("💾 RSS straipsnis įrašytas: {}", title);
+                }
+            }
+
+        } catch (Exception e) {
+            log.warn("❌ Nepavyko apdoroti RSS URL '{}': {}", feedUrl, e.getMessage());
+        }
     }
 
-    private LocalDate parsePubDate(String rawDate) {
+    private LocalDate parsePubDate(String pubDate) {
         try {
-            return LocalDate.parse(rawDate, DateTimeFormatter.RFC_1123_DATE_TIME);
+            return LocalDate.parse(pubDate, DateTimeFormatter.RFC_1123_DATE_TIME);
         } catch (Exception e) {
-            log.debug("⚠️ Nepavyko perskaityti datos '{}', naudojama šiandienos data", rawDate);
             return LocalDate.now();
         }
+    }
+
+    private NewsSource getDefaultNewsSource() {
+        String sourceName = "Tauragės kurjeris";
+        String url = "https://kurjeris.lt";
+
+        return newsSourceRepository.findBySourceName(sourceName)
+                .orElseGet(() -> {
+                    NewsSource created = NewsSource.builder()
+                            .sourceName(sourceName)
+                            .urlAddress(url)
+                            .build();
+                    return newsSourceRepository.save(created);
+                });
     }
 }
