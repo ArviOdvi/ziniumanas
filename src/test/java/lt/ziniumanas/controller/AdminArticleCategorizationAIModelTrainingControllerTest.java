@@ -1,5 +1,6 @@
 package lt.ziniumanas.controller;
 
+import lt.ziniumanas.controller.admin.AdminArticleCategorizationAIModelTrainingController;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
 import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
 import lt.ziniumanas.testconfig.MockAdminArticleCategorizationAIModelTrainingServiceConfig;

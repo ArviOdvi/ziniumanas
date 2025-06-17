@@ -1,4 +1,4 @@
-package lt.ziniumanas.controller;
+package lt.ziniumanas.controller.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ public class AdminArticleCategorizationAIModelTrainingController {
 
     private final AdminArticleCategorizationAIModelTrainingService trainingService;
 
-    @GetMapping("")
+    @GetMapping(HttpEndpoint.BASE)
     public String showTrainingPage(Model model) {
         model.addAttribute("trainingDto", new ArticleCategorizationAIModelTrainingDto());
         model.addAttribute("categories", trainingService.getValidCategories());
@@ -35,21 +35,21 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return HttpEndpoint.VIEW_AI_TRAINING;
     }
 
-    @GetMapping("/data")
+    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_ENDING_DATA)
     public String showTrainingData(Model model) {
         model.addAttribute("trainingData", trainingService.getAllTrainingData());
         model.addAttribute("categories", trainingService.getValidCategories());
         return HttpEndpoint.VIEW_AI_TRAINING_DATA;
     }
 
-    @GetMapping("/data-info")
+    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_ENDING_DATA_INFO)
     @ResponseBody
     public String trainingDataInfo() {
         long count = trainingService.getTrainingDataCount();
         return "Šiuo metu treniravimo duomenų bazėje yra " + count + " įrašų.";
     }
 
-    @GetMapping("/metrics")
+    @GetMapping(HttpEndpoint.ADMIN_AI_TRAINING_ENDING_METRICS)
     public String showTestMetrics(Model model) {
         try {
             Map<String, Object> metrics = trainingService.getTestMetrics();
@@ -60,7 +60,7 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return HttpEndpoint.VIEW_AI_TRAINING_METRICS;
     }
 
-    @PostMapping("")
+    @PostMapping(HttpEndpoint.BASE)
     public String addTrainingData(
             @Valid @ModelAttribute("trainingDto") ArticleCategorizationAIModelTrainingDto dto,
             BindingResult bindingResult,
@@ -80,7 +80,7 @@ public class AdminArticleCategorizationAIModelTrainingController {
         return "redirect:" + HttpEndpoint.ADMIN_AI_TRAINING;
     }
 
-    @PostMapping("/train")
+    @PostMapping(HttpEndpoint.ADMIN_AI_TRAINING_ENDING_TRAIN)
     @ResponseBody
     public String trainModelDirectly() {
         try {

@@ -1,4 +1,4 @@
-package lt.ziniumanas.controller.openpublic;
+package lt.ziniumanas.controller;
 
 import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.Article;
