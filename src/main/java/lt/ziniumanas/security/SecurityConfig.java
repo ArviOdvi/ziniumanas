@@ -1,46 +1,58 @@
 package lt.ziniumanas.security;
+import lt.ziniumanas.service.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthFilter;
+
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .authorizeHttpRequests((authz) -> authz
-                        .requestMatchers("/admin").authenticated() // Pridedame taisyklę konkrečiai /admin URL
-                        .requestMatchers("/admin/**").authenticated() // Reikalaujama autentikacijos visiems /admin/** URL
-                        .requestMatchers("/css/**", "/js/**", "/webjars/**").permitAll() // Leisti prieigą prie statinių resursų
-                        .anyRequest().permitAll() // Leisti prieigą prie visų kitų URL
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/",                        // leidžiamas pagrindinis puslapis
+                                "/index.html",              // leidžiamas index failas
+                                "/static/**",               // leidžiami visi statiniai failai (JS, CSS, img)
+                                "/favicon.png",             // leidžiamas favicon
+                                "/manifest.json",           // leidžiamas manifestas
+                                "/ziniumanas.png",             // leidžiamas logotipas
+                                "/api/articles",
+                                "/api/straipsnis/{id}",
+                                "/api/kategorija/{category}",
+                                "/api/login",               // leidžiamas prisijungimas
+                                "/api/register"             // leidžiama registracija
+                        ).permitAll()
+                        .anyRequest().authenticated()
                 )
-                .formLogin((form) -> form
-                        .loginPage("/login") // Nurodome savo prisijungimo puslapio URL
-                        .permitAll() // Leisti visiems pasiekti prisijungimo puslapį
-                        .defaultSuccessUrl("/admin/dashboard", true) // URL, į kurį nukreipti po sėkmingo prisijungimo
-                        .failureUrl("/login?error") // URL, į kurį nukreipti, jei prisijungimas nepavyko
-                )
-                .logout((logout) -> logout
-                        .permitAll() // Leisti visiems atsijungti
-                        .logoutSuccessUrl("/") // URL, į kurį nukreipti po atsijungimo
-                );
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails admin = User.withDefaultPasswordEncoder()
-                .username("admin") // Pakeiskite į savo norimą vartotojo vardą
-                .password("123") // Pakeiskite į saugų slaptažodį
-                .roles("ADMIN")
-                .build();
-        return new InMemoryUserDetailsManager(admin);
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
     }
 }

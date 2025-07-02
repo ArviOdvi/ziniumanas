@@ -1,48 +1,45 @@
 package lt.ziniumanas.controller;
 
 import lombok.RequiredArgsConstructor;
-import lt.ziniumanas.model.Article;
+import lt.ziniumanas.dto.ArticleDto;
 import lt.ziniumanas.service.ArticleService;
-import org.springframework.stereotype.Controller;
+import lt.ziniumanas.repository.ArticleRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-//Straipsnių sąrašo rodymas, konkretaus straipsnio peržiūra, paieška ir pan.
-@Controller
+@RestController
+@RequestMapping("/api")
 public class  ArticleController {
     private final ArticleService articleService;
 
-    @GetMapping("/")
-    public String showArticles(Model model) {
-        List<Article> articles = articleService.getAllArticles();
-        model.addAttribute("articles", articles);
-        return "index";
+    @GetMapping("/articles")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ArticleDto>> getArticles() {
+        List<ArticleDto> articles = articleService.getAllArticles();
+        return ResponseEntity.ok(articles);
     }
-    @GetMapping("/straipsnis/{id}")
-    public String getArticle(@PathVariable Long id, Model model) {
-        Optional<Article> optionalArticle = articleService.findById(id);
 
-        if (optionalArticle.isEmpty()) {
-            model.addAttribute("errorMessage", "Straipsnis nerastas, ID: " + id);
-            model.addAttribute("article", null);
-            return "single-article";
-        }
-        model.addAttribute("article", optionalArticle.get());
-        return "single-article";
+    @GetMapping("/straipsnis/{id}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<ArticleDto> getArticleById(@PathVariable Long id) {
+        return articleService.findById(id)
+                .map(article -> ResponseEntity.ok(new ArticleDto(article)))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/kategorija/{category}")
-    public String getArticlesByCategory(@PathVariable String category, Model model) {
-        List<Article> articles = articleService.getArticlesByCategory(category);
-        if (articles.isEmpty()) {
-            return "redirect:/"; // jei nėra straipsnių – grąžina į pradžią
-        }
-        model.addAttribute("articles", articles);
-        return "index"; // jei naudojate tą patį šabloną
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ArticleDto>> getArticlesByCategory(@PathVariable String category) {
+        List<ArticleDto> articles = articleService.getArticlesByCategory(category);
+        return ResponseEntity.ok(articles);
     }
 }
