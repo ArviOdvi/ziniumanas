@@ -1,36 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const navigate = useNavigate();
-    const { login } = useAuth();
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        fetch('http://localhost:8080/api/login', {
+        fetch('http://localhost:8080/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, role: 'USER' })
         })
             .then(res => {
-                if (!res.ok) throw new Error('Neteisingi prisijungimo duomenys');
+                if (!res.ok) throw new Error('Registracija nepavyko');
                 return res.json();
             })
             .then(data => {
-                login(data.token);
-                navigate('/');
+                localStorage.setItem('token', data.token);
+                navigate('/'); // Po sėkmingos registracijos grįžtame į pradžią
             })
             .catch(err => setError(err.message));
     };
 
     return (
         <div className="container mt-5" style={{ maxWidth: '400px' }}>
-            <h2 className="text-center mb-4">Prisijungimas</h2>
+            <h2 className="text-center mb-4">Registracija</h2>
 
             {error && <div className="alert alert-danger">{error}</div>}
 
@@ -59,7 +57,7 @@ export default function LoginPage() {
                     />
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">Prisijungti</button>
+                <button type="submit" className="btn btn-primary w-100">Registruotis</button>
             </form>
         </div>
     );

@@ -1,9 +1,11 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import './Header.css'; // čia sukursime CSS failą
+import { useAuth } from '../contexts/AuthContext';
+import './Header.css';
 
 export default function Header() {
     const location = useLocation();
+    const { isLoggedIn, logout } = useAuth();
 
     const categories1 = [
         { path: '/', label: 'Naujienos' },
@@ -51,7 +53,7 @@ export default function Header() {
                     style={{ maxWidth: "200px", height: "auto", aspectRatio: "10 / 3" }}
                 >
                     <p className="fst-italic" style={{ fontSize: "0.6rem", marginBottom: "0.125rem" }}>
-                        Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.
+                        Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnė idėją.
                     </p>
                 </div>
 
@@ -64,8 +66,12 @@ export default function Header() {
                     </ul>
                 </nav>
 
-                <Link to="/api/login" className="btn btn-outline-light">Prisijungti</Link>
-
+                {isLoggedIn ? (
+                    <button className="btn btn-outline-light" onClick={logout}>Atsijungti</button>
+                ) : (
+                    <Link to="/login" className="btn btn-outline-light">Prisijungti</Link>
+                )}
+                    <Link to="/register" className="btn btn-outline-light">Registracija</Link>
                 <form className="d-flex mt-2 mt-md-0" action="/search" method="get">
                     <label htmlFor="searchInput" className="visually-hidden">Ieškoti</label>
                     <input
@@ -75,7 +81,8 @@ export default function Header() {
                         name="q"
                         placeholder="Ieškoti..."
                     />
-                    <button className="btn btn-outline-light" type="submit">🔍</button>
+                    <button className="btn btn-outline-light" type="submit">🔍
+                    </button>
                 </form>
             </div>
         </header>
