@@ -43,7 +43,7 @@ public class AuthenticationService {
         userRepo.save(user);
         // 4. Generuojame JWT tokeną naujam vartotojui
         String token = generateToken(user);
-        return new AuthResponseDto(token);
+        return new AuthResponseDto(token, user.getRole());
     }
 
     public AuthResponseDto login(LoginRequestDto request) {
@@ -56,7 +56,7 @@ public class AuthenticationService {
         }
         // 3. Jei slaptažodis teisingas – generuojame JWT
         String token = generateToken(user);
-        return new AuthResponseDto(token);
+        return new AuthResponseDto(token, user.getRole());
     }
 
     // Pagalbinis metodas JWT tokeno sukūrimui naudojant JJWT

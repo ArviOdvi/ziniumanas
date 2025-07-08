@@ -1,4 +1,4 @@
-package lt.ziniumanas.service.adminservice;
+package lt.ziniumanas.service.admin;
 
 import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.ArticleScrapingRule;

@@ -1,11 +1,13 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './Header.css';
 
 export default function Header() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { isLoggedIn, logout } = useAuth();
+    const [searchQuery, setSearchQuery] = useState('');
 
     const categories1 = [
         { path: '/', label: 'Naujienos' },
@@ -41,6 +43,22 @@ export default function Header() {
         ))
     );
 
+    const handleSearch = (e) => {
+        e.preventDefault();
+        const trimmedQuery = searchQuery.trim();
+        if (trimmedQuery) {
+            navigate(`/search?q=${encodeURIComponent(trimmedQuery)}`, { replace: true });
+            // Dabar NEVALOM laukelio – paliekam užpildytą.
+        }
+    };
+
+    // Stebim, ar vartotojas išėjo iš paieškos puslapio
+    useEffect(() => {
+        if (!location.pathname.startsWith('/search')) {
+            setSearchQuery(''); // Valom laukelį tik jei išeinam iš paieškos puslapio
+        }
+    }, [location.pathname]);
+
     return (
         <header className="bg-dark text-white p-1">
             <div className="d-flex justify-content-between align-items-center">
@@ -53,7 +71,7 @@ export default function Header() {
                     style={{ maxWidth: "200px", height: "auto", aspectRatio: "10 / 3" }}
                 >
                     <p className="fst-italic" style={{ fontSize: "0.6rem", marginBottom: "0.125rem" }}>
-                        Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnė idėją.
+                        Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.
                     </p>
                 </div>
 
@@ -71,8 +89,9 @@ export default function Header() {
                 ) : (
                     <Link to="/login" className="btn btn-outline-light">Prisijungti</Link>
                 )}
-                    <Link to="/register" className="btn btn-outline-light">Registracija</Link>
-                <form className="d-flex mt-2 mt-md-0" action="/search" method="get">
+                <Link to="/register" className="btn btn-outline-light ms-2">Registracija</Link>
+
+                <form className="d-flex mt-2 mt-md-0" onSubmit={handleSearch}>
                     <label htmlFor="searchInput" className="visually-hidden">Ieškoti</label>
                     <input
                         className="form-control me-2"
@@ -80,9 +99,10 @@ export default function Header() {
                         id="searchInput"
                         name="q"
                         placeholder="Ieškoti..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                     />
-                    <button className="btn btn-outline-light" type="submit">🔍
-                    </button>
+                    <button className="btn btn-outline-light" type="submit">🔍</button>
                 </form>
             </div>
         </header>

@@ -1,7 +1,7 @@
 package lt.ziniumanas.controller.admin;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lt.ziniumanas.service.adminservice.AdminScrapingRuleService;
+import lt.ziniumanas.service.admin.AdminScrapingRuleService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;

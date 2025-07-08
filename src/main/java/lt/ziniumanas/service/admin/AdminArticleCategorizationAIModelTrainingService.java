@@ -1,4 +1,4 @@
-package lt.ziniumanas.service.adminservice;
+package lt.ziniumanas.service.admin;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;

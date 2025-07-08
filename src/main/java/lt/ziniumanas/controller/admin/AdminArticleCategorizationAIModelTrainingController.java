@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.util.HttpEndpoint;
 import lt.ziniumanas.dto.ArticleCategorizationAIModelTrainingDto;
-import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
+import lt.ziniumanas.service.admin.AdminArticleCategorizationAIModelTrainingService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;

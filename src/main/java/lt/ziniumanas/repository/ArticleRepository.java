@@ -14,4 +14,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
           Optional<Article> findByArticleNameAndArticleDate(String articleName, LocalDate articleDate);
           List<Article> findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(String category);
           List<Article> findByArticleCategoryIgnoreCase(String category);
+          List<Article> findByArticleNameContainingIgnoreCase(String query);
 }

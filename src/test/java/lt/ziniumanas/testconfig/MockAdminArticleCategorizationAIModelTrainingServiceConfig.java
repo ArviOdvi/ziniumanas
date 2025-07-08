@@ -1,6 +1,6 @@
 package lt.ziniumanas.testconfig;
 
-import lt.ziniumanas.service.adminservice.AdminArticleCategorizationAIModelTrainingService;
+import lt.ziniumanas.service.admin.AdminArticleCategorizationAIModelTrainingService;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;

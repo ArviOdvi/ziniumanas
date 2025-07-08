@@ -22,14 +22,19 @@ export default function LoginPage() {
                 return res.json();
             })
             .then(data => {
-                login(data.token);
-                navigate('/');
+                login(data.token, data.role);
+
+                if (data.role === 'ADMIN') {
+                    navigate('/admin');
+                } else {
+                    navigate('/');
+                }
             })
             .catch(err => setError(err.message));
     };
 
     return (
-        <div className="container mt-5" style={{ maxWidth: '400px' }}>
+        <div className="container mt-5" style={{ maxWidth: '400px', paddingTop: '200px' }}>
             <h2 className="text-center mb-4">Prisijungimas</h2>
 
             {error && <div className="alert alert-danger">{error}</div>}
