@@ -1,5 +1,6 @@
 package lt.ziniumanas.controller.admin;
 
+import lt.ziniumanas.dto.ArticleDto;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.service.admin.AdminArticleService;
 import lombok.RequiredArgsConstructor;
@@ -16,22 +17,22 @@ public class AdminArticleController {
     private final AdminArticleService adminArticleService;
 
     @GetMapping
-    public ResponseEntity<List<Article>> getAllArticles() {
-        List<Article> articles = adminArticleService.getAllArticles();
+    public ResponseEntity<List<ArticleDto>> getAllArticles() {
+        List<ArticleDto> articles = adminArticleService.getAllArticles();
         return ResponseEntity.ok(articles);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Article> getArticleById(@PathVariable Long id) {
+    public ResponseEntity<ArticleDto> getArticleById(@PathVariable Long id) {
         return adminArticleService.getArticleById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article article) {
-        article.setId(id);
-        Article updated = adminArticleService.updateArticle(article);
+    public ResponseEntity<ArticleDto> updateArticle(@PathVariable Long id, @RequestBody ArticleDto articleDto) {
+        articleDto.setId(id);
+        ArticleDto updated = adminArticleService.updateArticle(articleDto);
         return ResponseEntity.ok(updated);
     }
 

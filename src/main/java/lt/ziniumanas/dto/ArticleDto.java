@@ -23,8 +23,6 @@ public class ArticleDto {
     private boolean verificationStatus;
     private String articleCategory;
     private NewsSourceDto newsSource;
-    private List<String> imageUrls;
-    private List<String> videoUrls;
 
     public ArticleDto(Article article) {
         this.id = article.getId();
@@ -35,15 +33,5 @@ public class ArticleDto {
         this.verificationStatus = article.isVerificationStatus();
         this.articleCategory = article.getArticleCategory();
         this.newsSource = new NewsSourceDto(article.getNewsSource());
-
-        this.imageUrls = article.getImages() != null ?
-                article.getImages().stream()
-                        .map(ArticleImage::getImageUrl)
-                        .collect(Collectors.toList()) : null;
-
-        this.videoUrls = article.getVideos() != null ?
-                article.getVideos().stream()
-                        .map(ArticleVideo::getVideoUrl)
-                        .collect(Collectors.toList()) : null;
     }
 }
