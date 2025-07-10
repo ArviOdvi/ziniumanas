@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Pakeista
+import { useAuth } from '../contexts/AuthContext';
 
 export default function AdminArticleEditPage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user } = useAuth(); // Naudojame useAuth
+    const { user } = useAuth();
 
     const [article, setArticle] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -20,6 +20,7 @@ export default function AdminArticleEditPage() {
             return;
         }
 
+        console.log('Siunčiama užklausa į /api/admin/articles/' + id, 'Token:', user.token);
         fetch(`http://localhost:8080/api/admin/articles/${id}`, {
             headers: {
                 'Authorization': `Bearer ${user.token}`,
@@ -36,7 +37,7 @@ export default function AdminArticleEditPage() {
                 setLoading(false);
             })
             .catch(err => {
-                console.error('Klaida:', err.message);
+                console.error('Klaida kraunant straipsnį:', err.message);
                 setError(err.message);
                 setLoading(false);
             });
@@ -44,7 +45,10 @@ export default function AdminArticleEditPage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setArticle(prev => ({ ...prev, [name]: value }));
+        setArticle(prev => ({
+            ...prev,
+            [name]: name === 'verificationStatus' ? value === 'true' : value
+        }));
     };
 
     const handleSubmit = (e) => {
@@ -67,89 +71,88 @@ export default function AdminArticleEditPage() {
                 if (!res.ok) throw new Error(`Nepavyko atnaujinti straipsnio: ${res.status} ${res.statusText}`);
                 return res.json();
             })
-            .then(() => {
+            .then(data => {
+                console.log('Atnaujintas straipsnis:', data);
                 setSuccess('Straipsnis sėkmingai atnaujintas');
                 setTimeout(() => navigate('/admin'), 1500);
             })
             .catch(err => {
-                console.error('Klaida:', err.message);
+                console.error('Klaida atnaujinant straipsnį:', err.message);
                 setError(err.message);
             });
     };
 
-    if (loading) return <div style={{ color: 'black', fontSize: '24px', textAlign: 'center', marginTop: '20px' }}>Kraunama...</div>;
-    if (error) return <div style={{ color: 'red', fontSize: '24px', textAlign: 'center', marginTop: '20px' }}>Klaida: {error}</div>;
+    if (loading) return <div className="container mt-5 text-center">Kraunama...</div>;
+    if (error) return <div className="container mt-5 text-danger text-center">Klaida: {error}</div>;
 
     return (
-        <div style={{ maxWidth: '700px', margin: '20px auto', padding: '20px' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Redaguoti straipsnį</h2>
+        <div className="container mt-5" style={{ maxWidth: '700px' }}>
+            <h2 className="mb-4 text-center">Redaguoti straipsnį</h2>
 
-            {success && <div style={{ backgroundColor: '#d4edda', color: '#155724', padding: '10px', marginBottom: '20px', borderRadius: '5px' }}>{success}</div>}
+            {success && <div className="alert alert-success">{success}</div>}
 
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Pavadinimas</label>
+                <div className="mb-3">
+                    <label className="form-label">Pavadinimas</label>
                     <input
                         type="text"
                         name="articleName"
-                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        className="form-control"
                         value={article?.articleName || ''}
                         onChange={handleChange}
                         required
                     />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Turinys</label>
+                <div className="mb-3">
+                    <label className="form-label">Turinys</label>
                     <textarea
                         name="contents"
-                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', minHeight: '150px' }}
+                        className="form-control"
+                        rows="6"
                         value={article?.contents || ''}
                         onChange={handleChange}
                         required
                     ></textarea>
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Kategorija</label>
+                <div className="mb-3">
+                    <label className="form-label">Kategorija</label>
                     <input
                         type="text"
                         name="articleCategory"
-                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        className="form-control"
                         value={article?.articleCategory || ''}
                         onChange={handleChange}
                         required
                     />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Būsena</label>
+                <div className="mb-3">
+                    <label className="form-label">Būsena</label>
                     <input
                         type="text"
                         name="articleStatus"
-                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        className="form-control"
                         value={article?.articleStatus || ''}
                         onChange={handleChange}
                     />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Patikrinimo būsena</label>
-                    <input
-                        type="text"
+                <div className="mb-3">
+                    <label className="form-label">Patikrinimo būsena</label>
+                    <select
                         name="verificationStatus"
-                        style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-                        value={article?.verificationStatus || ''}
+                        className="form-select"
+                        value={article?.verificationStatus ? 'true' : 'false'}
                         onChange={handleChange}
-                    />
+                    >
+                        <option value="true">Patvirtinta</option>
+                        <option value="false">Nepatvirtinta</option>
+                    </select>
                 </div>
 
-                <button
-                    type="submit"
-                    style={{ width: '100%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                    Išsaugoti
-                </button>
+                <button type="submit" className="btn btn-primary w-100">Išsaugoti</button>
             </form>
         </div>
     );

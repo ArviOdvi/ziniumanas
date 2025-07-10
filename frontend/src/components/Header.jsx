@@ -76,10 +76,10 @@ export default function Header() {
                 </div>
 
                 <nav className="mt-2 mt-md-0">
-                    <ul className="nav flex-nowrap">
+                    <ul className="nav flex-nowrap text-white">
                         {renderCategoryLinks(categories1)}
                     </ul>
-                    <ul className="nav flex-nowrap" style={{ marginLeft: "80px", marginRight: "80px" }}>
+                    <ul className="nav flex-nowrap text-white" style={{ marginLeft: "80px", marginRight: "80px" }}>
                         {renderCategoryLinks(categories2)}
                     </ul>
                 </nav>
