@@ -1,62 +1,74 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function RegisterPage() {
+export default function RegisterPage({ fullPage }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [role, setRole] = useState('USER');
     const [error, setError] = useState(null);
+    const { login } = useAuth();
     const navigate = useNavigate();
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        fetch('http://localhost:8080/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password, role: 'USER' })
-        })
-            .then(res => {
-                if (!res.ok) throw new Error('Registracija nepavyko');
-                return res.json();
-            })
-            .then(data => {
-                localStorage.setItem('token', data.token);
-                navigate('/'); // Po sėkmingos registracijos grįžtame į pradžią
-            })
-            .catch(err => setError(err.message));
+        try {
+            const response = await fetch('http://localhost:8080/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, role })
+            });
+            if (!response.ok) throw new Error(`Registracija nepavyko: ${response.status} ${response.statusText}`);
+            const data = await response.json();
+            console.log('Registracijos atsakymas:', data);
+            login(data.token, data.role);
+            navigate(data.role === 'ADMIN' ? '/admin' : '/');
+        } catch (err) {
+            console.error('Klaida registruojantis:', err.message);
+            setError(err.message);
+        }
     };
 
     return (
-        <div className="container mt-5" style={{ maxWidth: '400px', paddingTop: '200px' }}>
-            <h2 className="text-center mb-4">Registracija</h2>
-
-            {error && <div className="alert alert-danger">{error}</div>}
-
+        <div className={`container mt-5 ${fullPage ? 'py-5' : ''}`} style={{ maxWidth: '500px' }}>
+            <h2 className="mb-4 text-center">Registracija</h2>
+            {error && <div className="alert alert-danger text-center">{error}</div>}
             <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                    <label htmlFor="username" className="form-label">Vartotojo vardas</label>
+                    <label htmlFor="usernameInput" className="form-label">Vartotojo vardas</label>
                     <input
                         type="text"
+                        id="usernameInput"
                         className="form-control"
-                        id="username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
                 </div>
-
                 <div className="mb-3">
-                    <label htmlFor="password" className="form-label">Slaptažodis</label>
+                    <label htmlFor="passwordInput" className="form-label">Slaptažodis</label>
                     <input
                         type="password"
+                        id="passwordInput"
                         className="form-control"
-                        id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                 </div>
-
+                <div className="mb-3">
+                    <label htmlFor="roleInput" className="form-label">Rolė</label>
+                    <select
+                        id="roleInput"
+                        className="form-select"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    >
+                        <option value="USER">Vartotojas</option>
+                        <option value="ADMIN">Administratorius</option>
+                    </select>
+                </div>
                 <button type="submit" className="btn btn-primary w-100">Registruotis</button>
             </form>
         </div>

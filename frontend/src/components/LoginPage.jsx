@@ -1,13 +1,16 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; // Pridėkite useNavigate
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import 'datatables.net-bs5';
+import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function LoginPage({ fullPage }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState(null);
     const { login } = useAuth();
-    const navigate = useNavigate(); // Pridėkite navigate
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,43 +23,40 @@ export default function LoginPage({ fullPage }) {
             if (!response.ok) throw new Error(`Prisijungimo klaida: ${response.status} ${response.statusText}`);
             const data = await response.json();
             login(data.token, data.role);
-            navigate('/admin'); // Nukreipkite į /admin
+            navigate('/admin');
         } catch (err) {
             setError(err.message);
         }
     };
 
     return (
-        <div style={{ alignContent: "center", maxWidth: '500px', margin: '20px auto', padding: '200px' }}>
-            <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Prisijungimas</h2>
-            {error && <div style={{ color: 'red', fontSize: '18px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
+        <div className={`container mt-5 ${fullPage ? 'py-5' : ''}`} style={{ maxWidth: '500px' }}>
+            <h2 className="mb-4 text-center">Prisijungimas</h2>
+            {error && <div className="alert alert-danger text-center">{error}</div>}
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ width: '400%', display: 'block', marginBottom: '5px' }}>Vartotojo vardas</label>
+                <div className="mb-3">
+                    <label htmlFor="usernameInput" className="form-label">Vartotojo vardas</label>
                     <input
                         type="text"
-                        style={{ width: '400%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        id="usernameInput"
+                        className="form-control"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                    <label style={{ display: 'block', marginBottom: '5px' }}>Slaptažodis</label>
+                <div className="mb-3">
+                    <label htmlFor="passwordInput" className="form-label">Slaptažodis</label>
                     <input
                         type="password"
-                        style={{ width: '400%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                        id="passwordInput"
+                        className="form-control"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                 </div>
-                <button
-                    type="submit"
-                    style={{ width: '400%', padding: '10px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                    Prisijungti
-                </button>
+                <button type="submit" className="btn btn-primary w-100">Prisijungti</button>
             </form>
         </div>
     );
