@@ -1,28 +1,32 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        const role = localStorage.getItem('role');
+        const token = sessionStorage.getItem('token');
+        const role = sessionStorage.getItem('role');
         if (token && role) {
             setUser({ token, role });
         }
     }, []);
 
     const login = (token, role) => {
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
+        sessionStorage.setItem('token', token);
+        sessionStorage.setItem('role', role);
         setUser({ token, role });
+        navigate(role === 'ADMIN' ? '/admin' : '/');
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('role');
         setUser(null);
+        navigate('/login');
     };
 
     const isLoggedIn = !!user;

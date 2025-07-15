@@ -57,18 +57,6 @@ export default function RegisterPage({ fullPage }) {
                         required
                     />
                 </div>
-                <div className="mb-3">
-                    <label htmlFor="roleInput" className="form-label">Rolė</label>
-                    <select
-                        id="roleInput"
-                        className="form-select"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                    >
-                        <option value="USER">Vartotojas</option>
-                        <option value="ADMIN">Administratorius</option>
-                    </select>
-                </div>
                 <button type="submit" className="btn btn-primary w-100">Registruotis</button>
             </form>
         </div>
