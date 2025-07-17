@@ -13,16 +13,20 @@ export default function RegisterPage({ fullPage }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(null);
         try {
             const response = await fetch('http://localhost:8080/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password, role })
             });
-            if (!response.ok) throw new Error(`Registracija nepavyko: ${response.status} ${response.statusText}`);
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Registracija nepavyko: ${response.status} ${errorText || response.statusText}`);
+            }
             const data = await response.json();
             console.log('Registracijos atsakymas:', data);
-            login(data.token, data.role);
+            login(data.token, data.role, data.username);
             navigate(data.role === 'ADMIN' ? '/admin' : '/');
         } catch (err) {
             console.error('Klaida registruojantis:', err.message);

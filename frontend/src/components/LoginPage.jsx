@@ -25,8 +25,8 @@ export default function LoginPage({ fullPage }) {
             }
             const data = await response.json();
             console.log('Prisijungimo atsakymas:', data);
-            login(data.token, data.role);
-            navigate(data.role === 'ADMIN' ? '/admin' : '/');
+            login(data.token, data.role, data.username);
+            navigate('/');
         } catch (err) {
             console.error('Klaida prisijungiant:', err.message);
             setError(err.message);

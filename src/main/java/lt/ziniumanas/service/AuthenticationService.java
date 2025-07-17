@@ -31,9 +31,9 @@ public class AuthenticationService {
     }
 
     public AuthResponseDto register(RegisterRequestDto request) {
-        logger.debug("Registering user: {}", request.getUsername());
+        logger.info("Registering user: {}", request.getUsername());
         if (userRepo.existsByUsername(request.getUsername())) {
-            logger.debug("Username already taken: {}", request.getUsername());
+            logger.warn("Username already taken: {}", request.getUsername());
             throw new RuntimeException("Username already taken");
         }
         String encodedPwd = passwordEncoder.encode(request.getPassword());
@@ -44,7 +44,7 @@ public class AuthenticationService {
         userRepo.save(user);
         logger.info("User registered: {}", request.getUsername());
         String token = generateToken(user);
-        return new AuthResponseDto(token, user.getRole());
+        return new AuthResponseDto(token, user.getRole(), user.getUsername());
     }
 
     public AuthResponseDto login(LoginRequestDto request) {
@@ -60,7 +60,7 @@ public class AuthenticationService {
         }
         logger.info("Login successful for user: {}", request.getUsername());
         String token = generateToken(user);
-        return new AuthResponseDto(token, user.getRole());
+        return new AuthResponseDto(token, user.getRole(), user.getUsername());
     }
 
     private String generateToken(NewsmanUser user) {

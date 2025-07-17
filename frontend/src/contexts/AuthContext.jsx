@@ -10,23 +10,26 @@ export default function AuthProvider({ children }) {
     useEffect(() => {
         const token = sessionStorage.getItem('token');
         const role = sessionStorage.getItem('role');
-        if (token && role) {
-            setUser({ token, role });
+        const username = sessionStorage.getItem('username');
+        if (token && role && username) {
+            setUser({ token, role, username });
         }
     }, []);
 
-    const login = (token, role) => {
+    const login = (token, role, username) => {
         sessionStorage.setItem('token', token);
         sessionStorage.setItem('role', role);
-        setUser({ token, role });
+        sessionStorage.setItem('username', username);
+        setUser({ token, role, username });
         navigate(role === 'ADMIN' ? '/admin' : '/');
     };
 
     const logout = () => {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('role');
+        sessionStorage.removeItem('username');
         setUser(null);
-        navigate('/login');
+        navigate('/');
     };
 
     const isLoggedIn = !!user;
