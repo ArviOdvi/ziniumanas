@@ -3,11 +3,14 @@ package lt.ziniumanas.service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import lt.ziniumanas.config.JwtSecretGenerator;
 import lt.ziniumanas.dto.AuthResponseDto;
 import lt.ziniumanas.dto.LoginRequestDto;
 import lt.ziniumanas.dto.RegisterRequestDto;
 import lt.ziniumanas.model.NewsmanUser;
 import lt.ziniumanas.repository.NewsmanUserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,59 +20,58 @@ import java.util.Date;
 public class AuthenticationService {
     private final NewsmanUserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtSecretGenerator jwtSecretGenerator;
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
+    private static final long JWT_EXPIRATION_MS = 86400000; // 24 val.
 
-    // JWT nustatymai (geriau būtų injectinti per config @Value)
-    private static final String JWT_SECRET = "5367566859703373367639792F423F45"; // pvz., 256-bit secret
-    private static final long   JWT_EXPIRATION_MS = 86400000; // 24 val. (ms)
-
-    // Konstruktorius injekcijai
-    public AuthenticationService(NewsmanUserRepository userRepo, PasswordEncoder passwordEncoder) {
+    public AuthenticationService(NewsmanUserRepository userRepo, PasswordEncoder passwordEncoder, JwtSecretGenerator jwtSecretGenerator) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jwtSecretGenerator = jwtSecretGenerator;
     }
 
     public AuthResponseDto register(RegisterRequestDto request) {
-        // 1. Patikriname, ar vartotojas neegzistuoja
+        logger.debug("Registering user: {}", request.getUsername());
         if (userRepo.existsByUsername(request.getUsername())) {
+            logger.debug("Username already taken: {}", request.getUsername());
             throw new RuntimeException("Username already taken");
         }
-        // 2. Užšifruojame slaptažodį prieš saugodami
         String encodedPwd = passwordEncoder.encode(request.getPassword());
-        // 3. Sukuriame ir išsaugome naują User entitetą
         NewsmanUser user = new NewsmanUser();
         user.setUsername(request.getUsername());
         user.setPassword(encodedPwd);
         user.setRole(request.getRole() != null ? request.getRole() : "USER");
         userRepo.save(user);
-        // 4. Generuojame JWT tokeną naujam vartotojui
+        logger.info("User registered: {}", request.getUsername());
         String token = generateToken(user);
         return new AuthResponseDto(token, user.getRole());
     }
 
     public AuthResponseDto login(LoginRequestDto request) {
-        // 1. Surandame vartotoją pagal username
+        logger.info("Attempting login for user: {}", request.getUsername());
         NewsmanUser user = userRepo.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        // 2. Patikriname slaptažodį (raw vs encoded)
+                .orElseThrow(() -> {
+                    logger.error("User not found: {}", request.getUsername());
+                    return new RuntimeException("User not found");
+                });
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            logger.error("Invalid credentials for user: {}", request.getUsername());
             throw new RuntimeException("Invalid credentials");
         }
-        // 3. Jei slaptažodis teisingas – generuojame JWT
+        logger.info("Login successful for user: {}", request.getUsername());
         String token = generateToken(user);
         return new AuthResponseDto(token, user.getRole());
     }
 
-    // Pagalbinis metodas JWT tokeno sukūrimui naudojant JJWT
     private String generateToken(NewsmanUser user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + JWT_EXPIRATION_MS);
         return Jwts.builder()
-                .setSubject(user.getUsername())              // sub: vartotojo vardas
-                .claim("role", user.getRole())               // custom claim: vartotojo rolė
-                .setIssuedAt(now)                            // iat: išdavimo laikas
-                .setExpiration(expiry)                       // exp: galiojimo laikas
-                .signWith(Keys.hmacShaKeyFor(JWT_SECRET.getBytes()),
-                        SignatureAlgorithm.HS256)         // pasirašome HMAC-SHA256
+                .setSubject(user.getUsername())
+                .claim("role", user.getRole())
+                .setIssuedAt(now)
+                .setExpiration(expiry)
+                .signWith(Keys.hmacShaKeyFor(jwtSecretGenerator.getJwtSecret().getBytes()), SignatureAlgorithm.HS256)
                 .compact();
     }
 }

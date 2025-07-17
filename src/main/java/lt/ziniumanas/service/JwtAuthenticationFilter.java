@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import lt.ziniumanas.config.JwtSecretGenerator;
 import lt.ziniumanas.model.NewsmanUser;
 import lt.ziniumanas.repository.NewsmanUserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,13 +21,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final NewsmanUserRepository userRepository;
-    private static final String JWT_SECRET = "5367566859703373367639792F423F45";
+    private final JwtSecretGenerator jwtSecretGenerator;
+    private static final Logger logger = Logger.getLogger(JwtAuthenticationFilter.class.getName());
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -38,7 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwtToken;
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            logger.debug("No Bearer token found in request for URI: " + request.getRequestURI());
+            logger.info("No Bearer token found in request for URI: " + request.getRequestURI());
             filterChain.doFilter(request, response);
             return;
         }
@@ -47,7 +50,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         try {
             Claims claims = Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(JWT_SECRET.getBytes()))
+                    .setSigningKey(Keys.hmacShaKeyFor(jwtSecretGenerator.getJwtSecret().getBytes()))
                     .build()
                     .parseClaimsJws(jwtToken)
                     .getBody();
@@ -66,13 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    logger.debug("Authenticated user: " + username + " with role: " + role);
+                    logger.info("Authenticated user: " + username + " with role: " + role);
                 } else {
-                    logger.debug("User not found: " + username);
+                    logger.warning("User not found: " + username);
                 }
             }
         } catch (Exception e) {
-            logger.debug("Error validating JWT: " + e.getMessage());
+            logger.severe("Error validating JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

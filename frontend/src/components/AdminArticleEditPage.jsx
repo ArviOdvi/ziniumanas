@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 export default function AdminArticleEditPage() {
     const { id } = useParams();
@@ -11,6 +12,38 @@ export default function AdminArticleEditPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
+
+    const categories = [
+        { value: 'Naujienos', label: 'Naujienos' },
+        { value: 'Pasaulyje', label: 'Pasaulyje' },
+        { value: 'Ekonomika', label: 'Ekonomika' },
+        { value: 'Kultūra', label: 'Kultūra' },
+        { value: 'Technologijos', label: 'Technologijos' },
+        { value: 'Istorija', label: 'Istorija' },
+        { value: 'Maistas', label: 'Maistas' },
+        { value: 'Sveikata', label: 'Sveikata' },
+        { value: 'Lietuvoje', label: 'Lietuvoje' },
+        { value: 'Politika', label: 'Politika' },
+        { value: 'Mokslas', label: 'Mokslas' },
+        { value: 'Sportas', label: 'Sportas' },
+        { value: 'Muzika', label: 'Muzika' },
+        { value: 'Laisvalaikis', label: 'Laisvalaikis' },
+        { value: 'Vaikams', label: 'Vaikams' }
+    ];
+
+    const articleStatuses = [
+        { value: 'DRAFT', label: 'Juodraštis' },
+        { value: 'PENDING_APPROVAL', label: 'Laukia patvirtinimo' },
+        { value: 'APPROVED', label: 'Patvirtintas' },
+        { value: 'PUBLISHED', label: 'Paskelbtas' },
+        { value: 'ARCHIVED', label: 'Archyvuotas' },
+        { value: 'REJECTED', label: 'Atmestas' }
+    ];
+
+    const verificationStatuses = [
+        { value: 'TRUE', label: 'Patvirtinta' },
+        { value: 'FALSE', label: 'Nepatvirtinta' }
+    ];
 
     useEffect(() => {
         if (!user || !user.token) {
@@ -47,7 +80,7 @@ export default function AdminArticleEditPage() {
         const { name, value } = e.target;
         setArticle(prev => ({
             ...prev,
-            [name]: name === 'verificationStatus' ? value === 'true' : value
+            [name]: value
         }));
     };
 
@@ -83,7 +116,14 @@ export default function AdminArticleEditPage() {
     };
 
     if (loading) return <div className="container mt-5 text-center">Kraunama...</div>;
-    if (error) return <div className="container mt-5 text-danger text-center">Klaida: {error}</div>;
+    if (error) return (
+        <div className="container mt-5 text-danger text-center">
+            Klaida: {error}
+            <button className="btn btn-secondary mt-3" onClick={() => navigate('/admin')}>
+                Grįžti
+            </button>
+        </div>
+    );
 
     return (
         <div className="container mt-5" style={{ maxWidth: '700px' }}>
@@ -118,25 +158,34 @@ export default function AdminArticleEditPage() {
 
                 <div className="mb-3">
                     <label className="form-label">Kategorija</label>
-                    <input
-                        type="text"
+                    <select
                         name="articleCategory"
-                        className="form-control"
+                        className="form-select"
                         value={article?.articleCategory || ''}
                         onChange={handleChange}
                         required
-                    />
+                    >
+                        <option value="">Pasirinkite kategoriją</option>
+                        {categories.map(cat => (
+                            <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="mb-3">
                     <label className="form-label">Būsena</label>
-                    <input
-                        type="text"
+                    <select
                         name="articleStatus"
-                        className="form-control"
+                        className="form-select"
                         value={article?.articleStatus || ''}
                         onChange={handleChange}
-                    />
+                        required
+                    >
+                        <option value="">Pasirinkite būseną</option>
+                        {articleStatuses.map(status => (
+                            <option key={status.value} value={status.value}>{status.label}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <div className="mb-3">
@@ -144,15 +193,27 @@ export default function AdminArticleEditPage() {
                     <select
                         name="verificationStatus"
                         className="form-select"
-                        value={article?.verificationStatus ? 'true' : 'false'}
+                        value={article?.verificationStatus || ''}
                         onChange={handleChange}
+                        required
                     >
-                        <option value="true">Patvirtinta</option>
-                        <option value="false">Nepatvirtinta</option>
+                        <option value="">Pasirinkite patikrinimo būseną</option>
+                        {verificationStatuses.map(status => (
+                            <option key={status.value} value={status.value}>{status.label}</option>
+                        ))}
                     </select>
                 </div>
 
-                <button type="submit" className="btn btn-primary w-100">Išsaugoti</button>
+                <div className="d-flex gap-2">
+                    <button type="submit" className="btn btn-primary w-100">Išsaugoti</button>
+                    <button
+                        type="button"
+                        className="btn btn-secondary w-100"
+                        onClick={() => navigate('/admin')}
+                    >
+                        Atšaukti
+                    </button>
+                </div>
             </form>
         </div>
     );

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.model.*;
 import lt.ziniumanas.model.enums.ArticleStatus;
+import lt.ziniumanas.model.enums.VerificationStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.ArticlePendingUrlRepository;
 import lt.ziniumanas.repository.ArticleScrapingRuleRepository;
@@ -72,7 +73,7 @@ public class HtmlArticleCollector implements ArticleCollector {
                                 .articleName(title)
                                 .articleDate(date)
                                 .articleStatus(ArticleStatus.DRAFT)
-                                .verificationStatus(false)
+                                .verificationStatus(VerificationStatus.FALSE)
                                 .contents(content)
                                 .newsSource(source)
                                 .build();

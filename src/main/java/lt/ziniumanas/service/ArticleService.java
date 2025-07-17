@@ -40,7 +40,7 @@ public class ArticleService {
         existing.setContents(updatedArticle.getContents());
         existing.setArticleDate(updatedArticle.getArticleDate());
         existing.setArticleStatus(updatedArticle.getArticleStatus());
-        existing.setVerificationStatus(updatedArticle.isVerificationStatus());
+        existing.setVerificationStatus(updatedArticle.getVerificationStatus());
 
         return articleRepository.save(existing);
     }

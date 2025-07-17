@@ -3,6 +3,7 @@ package lt.ziniumanas.model;
 import lombok.*;
 import jakarta.persistence.*;
 import lt.ziniumanas.model.enums.ArticleStatus;
+import lt.ziniumanas.model.enums.VerificationStatus;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -39,7 +40,8 @@ public class Article {
     private ArticleStatus articleStatus;
 
     @Column(name = "verification_status")
-    private boolean verificationStatus;
+    @Enumerated(EnumType.STRING)
+    private VerificationStatus verificationStatus;
 
     @Column(name = "article_category", nullable = false)
     private String articleCategory;

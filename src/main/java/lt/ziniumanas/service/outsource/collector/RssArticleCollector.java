@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lt.ziniumanas.model.*;
 import lt.ziniumanas.model.enums.ArticleStatus;
+import lt.ziniumanas.model.enums.VerificationStatus;
 import lt.ziniumanas.repository.ArticlePendingUrlRepository;
 import lt.ziniumanas.repository.ArticleRepository;
 import lt.ziniumanas.repository.NewsSourceRepository;
@@ -71,7 +72,7 @@ public class RssArticleCollector implements ArticleCollector{
                             .articleDate(articleDate)
                             .contents(content)
                             .articleStatus(ArticleStatus.DRAFT)
-                            .verificationStatus(false)
+                            .verificationStatus(VerificationStatus.FALSE)
                             .articleCategory("Nežinoma")
                             .newsSource(getDefaultNewsSource())
                             .build();
