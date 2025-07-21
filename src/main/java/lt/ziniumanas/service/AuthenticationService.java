@@ -3,7 +3,7 @@ package lt.ziniumanas.service;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import lt.ziniumanas.config.JwtSecretGenerator;
+import lt.ziniumanas.security.JwtSecretGenerator;
 import lt.ziniumanas.dto.AuthResponseDto;
 import lt.ziniumanas.dto.LoginRequestDto;
 import lt.ziniumanas.dto.RegisterRequestDto;

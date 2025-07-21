@@ -8,7 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lt.ziniumanas.config.JwtSecretGenerator;
+import lt.ziniumanas.security.JwtSecretGenerator;
 import lt.ziniumanas.model.NewsmanUser;
 import lt.ziniumanas.repository.NewsmanUserRepository;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,7 +21,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 @Component
 @Slf4j
@@ -29,7 +28,6 @@ import java.util.logging.Logger;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final NewsmanUserRepository userRepository;
     private final JwtSecretGenerator jwtSecretGenerator;
-    private static final Logger logger = Logger.getLogger(JwtAuthenticationFilter.class.getName());
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -69,13 +67,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
-                    logger.info("Authenticated user: " + username + " with role: " + role);
+                    logger.debug("Authenticated user: " + username + " with role: " + role);
                 } else {
-                    logger.warning("User not found: " + username);
+                    logger.debug("User not found: " + username);
                 }
             }
         } catch (Exception e) {
-            logger.severe("Error validating JWT: " + e.getMessage());
+            logger.debug("Error validating JWT: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

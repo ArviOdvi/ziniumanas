@@ -27,6 +27,12 @@ public class ArticleService {
                 .orElseThrow(() -> new ArticleNotFoundException(id));
     }
 
+    public List<ArticleDto> searchByQuery(String query) {
+        return articleRepository.findByArticleNameContainingIgnoreCase(query)
+                .stream()
+                .map(ArticleDto::new)
+                .collect(Collectors.toList());
+    }
     @Transactional(readOnly = true)
     public List<ArticleDto> getAllArticles() {
         List<Article> articles = articleRepository.findAll();

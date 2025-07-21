@@ -16,7 +16,9 @@ export default function SearchPage() {
         fetch(`http://localhost:8080/api/search?q=${encodeURIComponent(query)}`)
             .then(res => {
                 if (!res.ok) {
-                    throw new Error(`HTTP klaida: ${res.status}`);
+                    return res.text().then(text => {
+                        throw new Error(text || `Klaida kraunant straipsnius: ${res.status} ${res.statusText}`);
+                    });
                 }
                 return res.json();
             })

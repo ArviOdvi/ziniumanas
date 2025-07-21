@@ -1,4 +1,4 @@
-package lt.ziniumanas.config;
+package lt.ziniumanas.security;
 
 import lombok.Getter;
 import org.slf4j.Logger;
