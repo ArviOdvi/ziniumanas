@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -38,18 +37,20 @@ public class  ArticleController {
     @GetMapping("/kategorija/{category}")
     @Transactional(readOnly = true)
     public ResponseEntity<List<ArticleDto>> getArticlesByCategory(@PathVariable String category) {
+        if (category == null || category.trim().isEmpty() || category.equals("undefined")) {
+            return ResponseEntity.badRequest().build();
+        }
         List<ArticleDto> articles = articleService.getArticlesByCategory(category);
         return ResponseEntity.ok(articles);
     }
+
     @GetMapping("/search")
     @Transactional(readOnly = true)
     public ResponseEntity<List<ArticleDto>> searchArticles(@RequestParam String q) {
         List<Article> foundArticles = articleRepository.findByArticleNameContainingIgnoreCase(q);
-
         List<ArticleDto> result = foundArticles.stream()
                 .map(ArticleDto::new)
                 .collect(Collectors.toList());
-
         return ResponseEntity.ok(result);
     }
 }

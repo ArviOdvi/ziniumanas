@@ -5,7 +5,6 @@ import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.dto.ArticleDto;
 import lt.ziniumanas.error.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
-import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,27 +25,6 @@ public class ArticleService {
     public Article getArticleById(Long id) {
         return articleRepository.findById(id)
                 .orElseThrow(() -> new ArticleNotFoundException(id));
-    }
-
-    public Article createArticle(Article article) {
-        return articleRepository.save(article);
-    }
-
-    public Article updateArticle(Long id, Article updatedArticle) {
-        Article existing = articleRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Straipsnis nerastas, id = " + id));
-
-        existing.setArticleName(updatedArticle.getArticleName());
-        existing.setContents(updatedArticle.getContents());
-        existing.setArticleDate(updatedArticle.getArticleDate());
-        existing.setArticleStatus(updatedArticle.getArticleStatus());
-        existing.setVerificationStatus(updatedArticle.getVerificationStatus());
-
-        return articleRepository.save(existing);
-    }
-
-    public void deleteArticle(Long id) {
-        articleRepository.deleteById(id);
     }
 
     @Transactional(readOnly = true)

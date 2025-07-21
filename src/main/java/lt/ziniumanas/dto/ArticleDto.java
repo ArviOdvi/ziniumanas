@@ -20,6 +20,7 @@ public class ArticleDto {
     private VerificationStatus verificationStatus;
     private String articleCategory;
     private Long newsSourceId;
+    private String sourceName;
 
     public ArticleDto(Article article) {
         this.id = article.getId();
@@ -30,5 +31,6 @@ public class ArticleDto {
         this.verificationStatus = article.getVerificationStatus();
         this.articleCategory = article.getArticleCategory();
         this.newsSourceId = article.getNewsSource() != null ? article.getNewsSource().getId() : null;
+        this.sourceName = article.getNewsSource() != null ? article.getNewsSource().getSourceName() : null;
     }
 }

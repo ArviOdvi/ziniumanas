@@ -6,7 +6,6 @@ import lt.ziniumanas.model.NewsSource;
 import lt.ziniumanas.repository.ArticleRepository;
 import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.repository.NewsSourceRepository;
-import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +49,22 @@ public class AdminArticleService {
         }
         Article updated = articleRepository.save(article);
         return new ArticleDto(updated);
+    }
+    public Article createArticle(Article article) {
+        return articleRepository.save(article);
+    }
+
+    public Article updateArticle(Long id, Article updatedArticle) {
+        Article existing = articleRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Straipsnis nerastas, id = " + id));
+
+        existing.setArticleName(updatedArticle.getArticleName());
+        existing.setContents(updatedArticle.getContents());
+        existing.setArticleDate(updatedArticle.getArticleDate());
+        existing.setArticleStatus(updatedArticle.getArticleStatus());
+        existing.setVerificationStatus(updatedArticle.getVerificationStatus());
+
+        return articleRepository.save(existing);
     }
 
     @Transactional

@@ -118,7 +118,7 @@ export default function AdminPage() {
                             </td>
                             <td>{article.articleCategory}</td>
                             <td>{article.articleStatus}</td>
-                            <td>{article.verificationStatus ? 'Patvirtinta' : 'Nepatvirtinta'}</td>
+                            <td>{article.verificationStatus}</td>
                             <td>{article.articleDate}</td>
                         </tr>
                     ))}

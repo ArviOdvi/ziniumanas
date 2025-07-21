@@ -11,8 +11,8 @@ import java.util.List;
 @Repository
 public interface ArticleRepository extends JpaRepository<Article, Long> {
           // Galima pridėti papildomus metodus, jei reikės specifinių užklausų
-          Optional<Article> findByArticleNameAndArticleDate(String articleName, LocalDate articleDate);
-          List<Article> findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(String category);
-          List<Article> findByArticleCategoryIgnoreCase(String category);
-          List<Article> findByArticleNameContainingIgnoreCase(String query);
+    Optional<Article> findByArticleNameAndArticleDate(String articleName, LocalDate articleDate);
+    List<Article> findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(String category);
+    List<Article> findByArticleCategoryIgnoreCase(String category);
+    List<Article> findByArticleNameContainingIgnoreCase(String query);
 }

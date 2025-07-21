@@ -12,7 +12,7 @@ export default function ArticleCard({ article }) {
         <article className="mb-4">
             <div className="text-muted small mb-1">{article. articleDate || 'Nėra datos'}</div>
             <div className="mb-4">
-                <span className="badge bg-secondary">{article.newsSource?.sourceName || 'Nėra šaltinio'}</span>
+                <span className="badge bg-secondary">{article.sourceName || 'Nėra šaltinio'}</span>
             </div>
             <h2>
                 <Link to={`/straipsnis/${article.id}`} className="text-dark text-decoration-none">

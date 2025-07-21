@@ -9,6 +9,7 @@ export default function AdminArticleEditPage() {
     const { user } = useAuth();
 
     const [article, setArticle] = useState(null);
+    const [newsSources, setNewsSources] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -53,7 +54,27 @@ export default function AdminArticleEditPage() {
             return;
         }
 
-        console.log('Siunčiama užklausa į /api/admin/articles/' + id, 'Token:', user.token);
+        // Gauti NewsSource sąrašą
+        fetch('http://localhost:8080/api/news-sources', {
+            headers: {
+                'Authorization': `Bearer ${user.token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => {
+                if (!res.ok) throw new Error(`Klaida kraunant šaltinius: ${res.status} ${res.statusText}`);
+                return res.json();
+            })
+            .then(data => {
+                console.log('Gauti šaltiniai:', data);
+                setNewsSources(data);
+            })
+            .catch(err => {
+                console.error('Klaida kraunant šaltinius:', err.message);
+                setError(err.message);
+            });
+
+        // Gauti straipsnio duomenis
         fetch(`http://localhost:8080/api/admin/articles/${id}`, {
             headers: {
                 'Authorization': `Bearer ${user.token}`,
@@ -168,6 +189,22 @@ export default function AdminArticleEditPage() {
                         <option value="">Pasirinkite kategoriją</option>
                         {categories.map(cat => (
                             <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                <div className="mb-3">
+                    <label className="form-label">Šaltinis</label>
+                    <select
+                        name="newsSourceId"
+                        className="form-select"
+                        value={article?.newsSourceId || ''}
+                        onChange={handleChange}
+                        required
+                    >
+                        <option value="">Pasirinkite šaltinį</option>
+                        {newsSources.map(source => (
+                            <option key={source.id} value={source.id}>{source.sourceName}</option>
                         ))}
                     </select>
                 </div>
