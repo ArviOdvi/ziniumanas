@@ -26,6 +26,9 @@ spring:
     dispatch-options-request: true
     pathmatch:
       matching-strategy: ant_path_matcher
+  profiles:
+    active:
+      dev
 server:
   port: 8080
   error:
