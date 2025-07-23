@@ -8,13 +8,16 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.NewsmanUser;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 
+import javax.crypto.KeyGenerator;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-    private final JwtSecretGenerator jwtSecretGenerator;
+    private byte[] secretKey;
     private static final long JWT_EXPIRATION_MS = 86400000; // 24 val.
 
     public String createToken(NewsmanUser user) {
@@ -26,14 +29,14 @@ public class JwtService {
                 .claim("role", user.getRole())
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(Keys.hmacShaKeyFor(jwtSecretGenerator.getJwtSecret().getBytes()), SignatureAlgorithm.HS256)
+                .signWith(Keys.hmacShaKeyFor(secretKey), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                    .setSigningKey(Keys.hmacShaKeyFor(jwtSecretGenerator.getJwtSecret().getBytes()))
+                    .setSigningKey(Keys.hmacShaKeyFor(secretKey))
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -52,9 +55,14 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtSecretGenerator.getJwtSecret().getBytes()))
+                .setSigningKey(Keys.hmacShaKeyFor(secretKey))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+    @PostConstruct
+    protected void init() throws NoSuchAlgorithmException {
+        // Generate a random secret key for HMAC SHA-512
+        secretKey = KeyGenerator.getInstance("HmacSHA512").generateKey().getEncoded();
     }
 }
