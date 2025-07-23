@@ -31,7 +31,7 @@ public class AuthenticationService {
         user.setRole(request.getRole() != null ? request.getRole() : "USER");
         userRepo.save(user);
         log.debug("User registered: {}", request.getUsername());
-        String token = jwtService.generateToken(user);
+        String token = jwtService.createToken(user);
         return new AuthResponseDto(token, user.getRole(), user.getUsername());
     }
 
@@ -47,7 +47,7 @@ public class AuthenticationService {
             throw new RuntimeException("Invalid credentials");
         }
         log.debug("Login successful for user: {}", request.getUsername());
-        String token = jwtService.generateToken(user);
+        String token = jwtService.createToken(user);
         return new AuthResponseDto(token, user.getRole(), user.getUsername());
     }
 }

@@ -7,7 +7,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.model.NewsmanUser;
-import lt.ziniumanas.security.JwtSecretGenerator;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -18,7 +17,7 @@ public class JwtService {
     private final JwtSecretGenerator jwtSecretGenerator;
     private static final long JWT_EXPIRATION_MS = 86400000; // 24 val.
 
-    public String generateToken(NewsmanUser user) {
+    public String createToken(NewsmanUser user) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + JWT_EXPIRATION_MS);
 
