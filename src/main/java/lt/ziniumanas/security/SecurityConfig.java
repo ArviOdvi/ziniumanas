@@ -1,5 +1,5 @@
 package lt.ziniumanas.security;
-import lt.ziniumanas.service.JwtAuthenticationFilter;
+import lt.ziniumanas.service.security.JwtAuthenticationFilter;
 import static org.springframework.security.config.Customizer.withDefaults;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

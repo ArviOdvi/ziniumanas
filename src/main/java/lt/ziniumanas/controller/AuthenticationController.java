@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.dto.AuthResponseDto;
 import lt.ziniumanas.dto.LoginRequestDto;
 import lt.ziniumanas.dto.RegisterRequestDto;
-import lt.ziniumanas.service.AuthenticationService;
+import lt.ziniumanas.service.security.AuthenticationService;
 import org.springframework.web.bind.annotation.*;
 
 
