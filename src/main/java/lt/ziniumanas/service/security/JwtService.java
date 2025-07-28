@@ -18,7 +18,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class JwtService {
     private byte[] secretKey;
-    private static final long JWT_EXPIRATION_MS = 86400000; // 24 val.
+    private static final long JWT_EXPIRATION_MS = 900000; // 15 min.
 
     public String createToken(NewsmanUser user) {
         Date now = new Date();

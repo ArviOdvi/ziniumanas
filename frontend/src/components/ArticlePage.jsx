@@ -39,7 +39,7 @@ export default function ArticlePage() {
             <h1 className="mb-3">{article.articleName}</h1>
             <div className="text-muted mb-2">{article.articleDate}</div>
             <div className="mb-3">
-                <span className="badge bg-secondary">{article.newsSource.sourceName}</span>
+                <span className="badge bg-secondary">{article.sourceName}</span>
             </div>
             <div dangerouslySetInnerHTML={{ __html: formatHtml(article.contents) }} />
 

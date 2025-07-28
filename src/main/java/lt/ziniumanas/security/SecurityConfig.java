@@ -31,7 +31,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/", "/index.html", "/static/**", "/favicon.png",
-                                "/manifest.json", "/ziniumanas.png",
+                                "/manifest.json", "/ziniumanas.png","/logo192.png",
                                 "/api/articles", "/api/straipsnis/{id}",
                                 "/api/kategorija/{category}", "/api/login",
                                 "/api/register", "/api/search"

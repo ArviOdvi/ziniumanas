@@ -3,24 +3,35 @@ import { Link } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 
 export default function ArticleCard({ article }) {
-    console.log('Article in ArticleCard:', article); // Derinimui
     if (!article) {
         return <div>Klaida: straipsnis nerastas</div>;
     }
 
+    const handleSaveArticleId = () => {
+        sessionStorage.setItem('lastViewedArticleId', article.id); // Saugok ID prieš einant į straipsnį
+    };
+
     return (
         <article className="mb-4">
-            <div className="text-muted small mb-1">{article. articleDate || 'Nėra datos'}</div>
+            <div className="text-muted small mb-1">{article.articleDate || 'Nėra datos'}</div>
             <div className="mb-4">
                 <span className="badge bg-secondary">{article.sourceName || 'Nėra šaltinio'}</span>
             </div>
             <h2>
-                <Link to={`/straipsnis/${article.id}`} className="text-dark text-decoration-none">
+                <Link
+                    to={`/straipsnis/${article.id}`}
+                    className="text-dark text-decoration-none"
+                    onClick={handleSaveArticleId} // Pridėk čia
+                >
                     {article.articleName || 'Be pavadinimo'}
                 </Link>
             </h2>
             <div dangerouslySetInnerHTML={{ __html: formatHtml(article.contents) }} />
-            <Link to={`/straipsnis/${article.id}`} className="btn btn-sm btn-primary mt-2">
+            <Link
+                to={`/straipsnis/${article.id}`}
+                className="btn btn-sm btn-primary mt-2"
+                onClick={handleSaveArticleId} // Ir čia
+            >
                 Skaityti daugiau
             </Link>
         </article>

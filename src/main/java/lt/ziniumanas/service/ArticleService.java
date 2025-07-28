@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lt.ziniumanas.dto.ArticleDto;
 import lt.ziniumanas.error.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
+import lt.ziniumanas.model.enums.ArticleStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,20 +23,25 @@ public class ArticleService {
         return articleRepository.findById(id);
     }
 
+
     public Article getArticleById(Long id) {
         return articleRepository.findById(id)
                 .orElseThrow(() -> new ArticleNotFoundException(id));
     }
 
+    @Transactional(readOnly = true)
     public List<ArticleDto> searchByQuery(String query) {
-        return articleRepository.findByArticleNameContainingIgnoreCase(query)
-                .stream()
+        List<Article> articles = articleRepository.findByArticleNameContainingIgnoreCaseAndArticleStatus(
+                query,
+                ArticleStatus.PUBLISHED
+        );
+        return articles.stream()
                 .map(ArticleDto::new)
                 .collect(Collectors.toList());
     }
     @Transactional(readOnly = true)
     public List<ArticleDto> getAllArticles() {
-        List<Article> articles = articleRepository.findAll();
+        List<Article> articles = articleRepository.findByArticleStatus(ArticleStatus.PUBLISHED);
         return articles.stream()
                 .map(ArticleDto::new)
                 .collect(Collectors.toList());
@@ -43,7 +49,10 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     public List<ArticleDto> getArticlesByCategory(String category) {
-        List<Article> articles = articleRepository.findByArticleCategoryIgnoreCaseOrderByArticleDateDesc(category);
+        List<Article> articles = articleRepository.findByArticleCategoryIgnoreCaseAndArticleStatusOrderByArticleDateDesc(
+                category,
+                ArticleStatus.PUBLISHED
+        );
         return articles.stream()
                 .map(ArticleDto::new)
                 .collect(Collectors.toList());
