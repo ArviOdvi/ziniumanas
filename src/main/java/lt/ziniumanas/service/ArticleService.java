@@ -6,6 +6,7 @@ import lt.ziniumanas.dto.ArticleDto;
 import lt.ziniumanas.error.ArticleNotFoundException;
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.enums.ArticleStatus;
+import lt.ziniumanas.model.enums.VerificationStatus;
 import lt.ziniumanas.repository.ArticleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,9 +32,9 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     public List<ArticleDto> searchByQuery(String query) {
-        List<Article> articles = articleRepository.findByArticleNameContainingIgnoreCaseAndArticleStatus(
+        List<Article> articles = articleRepository.findByArticleNameContainingIgnoreCaseAndVerificationStatus(
                 query,
-                ArticleStatus.PUBLISHED
+                VerificationStatus.TRUE
         );
         return articles.stream()
                 .map(ArticleDto::new)

@@ -5,7 +5,7 @@ import 'datatables.net-bs5';
 import 'datatables.net-bs5/css/dataTables.bootstrap5.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css'; // Pridėta, bet galima pašalinti, jei importuojama globaliai
 import './AdminPage.css';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function AdminPage() {
     const [articles, setArticles] = useState([]);

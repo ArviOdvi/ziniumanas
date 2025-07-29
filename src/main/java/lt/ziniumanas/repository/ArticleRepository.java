@@ -2,6 +2,7 @@ package lt.ziniumanas.repository;
 // Operacijos su tinklapio modelio objektais duomenų bazėje: išsaugojimas, paieška, atnaujinimas, šalinimas
 import lt.ziniumanas.model.Article;
 import lt.ziniumanas.model.enums.ArticleStatus;
+import lt.ziniumanas.model.enums.VerificationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -16,5 +17,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     List<Article> findByArticleNameContainingIgnoreCase(String query);
     List<Article> findByArticleStatus(ArticleStatus status);
     List<Article> findByArticleCategoryIgnoreCaseAndArticleStatusOrderByArticleDateDesc(String category, ArticleStatus status);
-    List<Article> findByArticleNameContainingIgnoreCaseAndArticleStatus(String query, ArticleStatus status);
+    List<Article> findByArticleNameContainingIgnoreCaseAndVerificationStatus(String query, VerificationStatus verificationStatus);
 }

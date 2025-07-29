@@ -8,7 +8,7 @@ export default function ArticleCard({ article }) {
     }
 
     const handleSaveArticleId = () => {
-        sessionStorage.setItem('lastViewedArticleId', article.id); // Saugok ID prieš einant į straipsnį
+        sessionStorage.setItem('lastViewedArticleId', article.id); // Saugok ID
     };
 
     return (
@@ -21,7 +21,7 @@ export default function ArticleCard({ article }) {
                 <Link
                     to={`/straipsnis/${article.id}`}
                     className="text-dark text-decoration-none"
-                    onClick={handleSaveArticleId} // Pridėk čia
+                    onClick={handleSaveArticleId}
                 >
                     {article.articleName || 'Be pavadinimo'}
                 </Link>
@@ -30,7 +30,7 @@ export default function ArticleCard({ article }) {
             <Link
                 to={`/straipsnis/${article.id}`}
                 className="btn btn-sm btn-primary mt-2"
-                onClick={handleSaveArticleId} // Ir čia
+                onClick={handleSaveArticleId}
             >
                 Skaityti daugiau
             </Link>
