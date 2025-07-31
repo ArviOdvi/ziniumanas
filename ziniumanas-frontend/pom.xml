@@ -7,10 +7,12 @@
         <groupId>lt.ziniumanas</groupId>
         <artifactId>ziniumanas</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+
     </parent>
 
-    <artifactId>frontend</artifactId>
+    <artifactId>ziniumanas-frontend</artifactId>
     <packaging>pom</packaging>
+    <name>Ziniumanas Frontend</name>
 
     <build>
         <plugins>

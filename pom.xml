@@ -13,8 +13,8 @@
     <description>Multi-module project with backend and frontend</description>
 
     <modules>
-        <module>backend</module>
-        <module>frontend</module>
+        <module>ziniumanas-backend</module>
+        <module>ziniumanas-frontend</module>
     </modules>
 
     <properties>

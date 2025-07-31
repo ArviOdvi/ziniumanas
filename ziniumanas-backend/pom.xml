@@ -10,7 +10,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>backend</artifactId>
+    <artifactId>ziniumanas-backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Ziniumanas Backend</name>
     <description>Spring Boot API</description>
