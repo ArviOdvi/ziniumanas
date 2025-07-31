@@ -44,7 +44,7 @@ RUN keytool -importcert \
     -storepass changeit
 
 # Kopijuojame projekto failus
-COPY pom.xml .
+COPY backend/pom.xml .
 RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn package -DskipTests
