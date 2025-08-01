@@ -12,7 +12,15 @@
 
     <artifactId>ziniumanas-frontend</artifactId>
     <packaging>pom</packaging>
-    <name>Ziniumanas Frontend</name>
+    <name>FRONTEND module</name>
+
+    <properties>
+        <java.version>21</java.version>
+        <dl4j.version>1.0.0-M2.1</dl4j.version>
+        <logback.version>1.5.18</logback.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
 
     <build>
         <plugins>
@@ -30,8 +38,8 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v18.17.1</nodeVersion>
-                            <npmVersion>9.8.1</npmVersion>
+                            <nodeVersion>v22.18.0</nodeVersion>
+                            <npmVersion>10.9.3</npmVersion>
                         </configuration>
                     </execution>
                     <execution>

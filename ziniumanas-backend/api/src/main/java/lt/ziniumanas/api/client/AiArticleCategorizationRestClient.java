@@ -1,25 +1,25 @@
 package lt.ziniumanas.api.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lt.ziniumanas.api.config.ClassificationApiProperties;
+import lt.ziniumanas.api.dto.AiArticleCategorizationDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import lt.ziniumanas.dto.AiArticleCategorizationDto;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AiArticleCategorizationRestClient {
     private final ObjectMapper objectMapper;
-    private final String classificationUrl = "http://localhost:5000/predict"; // Gali būti konfigūruojama
+    private final HttpClient httpClient; // Injekcija iš RestClientConfig
+    private final ClassificationApiProperties properties; // Injekcija, kad gautum url
 
     public String classify(String contents) {
         if (contents == null || contents.trim().isEmpty()) {
@@ -28,31 +28,26 @@ public class AiArticleCategorizationRestClient {
 
         try {
             String jsonRequest = objectMapper.writeValueAsString(new AiArticleCategorizationDto(contents));
-            HttpURLConnection connection = createConnection(classificationUrl);
 
-            try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonRequest.getBytes(StandardCharsets.UTF_8);
-                os.write(input, 0, input.length);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(properties.getUrl())) // Naudojame url iš konfigūracijos
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonRequest, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                log.debug("AI serveris grąžino klaidą: statusas {}, atsakymas: {}", response.statusCode(), response.body());
+                return "Nežinoma";
             }
 
-            JsonNode responseJson = objectMapper.readTree(connection.getInputStream());
+            JsonNode responseJson = objectMapper.readTree(response.body());
             return responseJson.has("label") ? responseJson.get("label").asText() : "Nežinoma";
 
         } catch (Exception e) {
-            log.error("\u274C AI klasifikatoriaus klaida: {}", e.getMessage(), e);
+            log.debug("❌ AI klasifikatoriaus klaida: {}", e.getMessage(), e);
             return "Nežinoma";
         }
-    }
-
-    private HttpURLConnection createConnection(String urlString) throws IOException {
-        URI uri = URI.create(urlString);
-        URL url = uri.toURL();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setRequestProperty("Content-Type", "application/json");
-        connection.setConnectTimeout(5000);
-        connection.setReadTimeout(5000);
-        connection.setDoOutput(true);
-        return connection;
     }
 }

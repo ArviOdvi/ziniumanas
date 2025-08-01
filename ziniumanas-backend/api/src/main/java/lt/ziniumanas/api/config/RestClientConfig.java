@@ -1,7 +1,7 @@
 package lt.ziniumanas.api.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lt.ziniumanas.config.ClassificationApiProperties;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -10,6 +10,7 @@ import java.time.Duration;
 
 @Configuration
 public class RestClientConfig {
+
     @Bean
     public HttpClient httpClient(ClassificationApiProperties properties) {
         return HttpClient.newBuilder()
@@ -19,6 +20,10 @@ public class RestClientConfig {
 
     @Bean
     public ObjectMapper objectMapper() {
-        return new ObjectMapper();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new JavaTimeModule()); // Pridėk šią eilutę
+        // Jei nori, gali pridėti daugiau konfigūracijų, pvz., išjungti datų rašymą kaip timestamp'us:
+        // mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return mapper;
     }
 }
