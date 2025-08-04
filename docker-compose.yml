@@ -1,28 +1,48 @@
 version: '3.8'
+
 services:
-  mano-spring-app:
-    build: .
-    container_name: ziniumanas_app
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: newsman_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
-      - "8080:8080"
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./ziniumanas-backend/main
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+      - ai-classifier
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/newsman_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-    depends_on:
-      - postgres
-    volumes:
-      - C:/Users/Admin/IdeaProjects/Ziniumanas/models/custom-distilbert:/app/models
-  postgres:
-    image: postgres:13
-    container_name: newsman_postgres
-    environment:
-      POSTGRES_DB: newsman_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      CLASSIFIER_URL: http://ai-classifier:5000
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./ziniumanas-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+  ai-classifier:
+    build:
+      context: C:\Users\Admin\Python_IdeaProjects\python-classifier-api
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+
 volumes:
   postgres_data:
