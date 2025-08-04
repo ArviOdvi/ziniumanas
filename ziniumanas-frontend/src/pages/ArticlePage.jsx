@@ -8,7 +8,7 @@ export default function ArticlePage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch(`/api/straipsnis/${id}`)
+        fetch(`http://localhost:8080/api/straipsnis/${id}`)
             .then((res) => {
                 if (!res.ok) {
                     throw new Error(`Klaida: ${res.status}`);
@@ -28,7 +28,7 @@ export default function ArticlePage() {
 
     if (loading) return <div className="container mt-5">Įkeliama...</div>;
     if (klaida) return <div className="container mt-5 alert alert-danger">{klaida}</div>;
-    if (!article) return null;
+    if (!article) return <div className="container mt-5 alert alert-warning">Straipsnis nerastas.</div>;
 
     return (
         <div className="container overflow-auto px-3" style={{
@@ -37,14 +37,20 @@ export default function ArticlePage() {
             maxHeight: "calc(100vh - 165px)"
         }}>
             <h1 className="mb-3">{article.articleName}</h1>
-            <div className="text-muted mb-2">{article.articleDate}</div>
-            <div className="mb-3">
-                <span className="badge bg-secondary">{article.newsSource}</span>
-            </div>
-            <div dangerouslySetInnerHTML={{ __html: formatHtml(article.contents) }} />
+            <div className="text-muted mb-2">{formatDate(article.articleDate)}</div>
+
+            {article?.sourceName && (
+                <div className="mb-3">
+                    <span className="badge bg-secondary">{article.sourceName}</span>
+                </div>
+            )}
+
+            {article.contents && (
+                <div dangerouslySetInnerHTML={{ __html: formatHtml(article.contents) }} />
+            )}
 
             {/* Galerija – jei yra paveikslėlių */}
-            {article.imageUrls && article.imageUrls.length > 0 && (
+            {Array.isArray(article.imageUrls) && article.imageUrls.length > 0 && (
                 <div className="mt-4">
                     <h5>Paveikslėliai</h5>
                     <div className="d-flex flex-wrap gap-3">
@@ -56,7 +62,7 @@ export default function ArticlePage() {
             )}
 
             {/* Video */}
-            {article.videoUrls && article.videoUrls.length > 0 && (
+            {Array.isArray(article.videoUrls) && article.videoUrls.length > 0 && (
                 <div className="mt-4">
                     <h5>Vaizdo įrašai</h5>
                     <div className="d-flex flex-column gap-3">
@@ -73,7 +79,19 @@ export default function ArticlePage() {
     );
 }
 
+// Pakeičia '---' į pastraipas
 function formatHtml(text) {
-    const html = text.replace(/---/g, "</p><p>");
+    if (!text) return '';
+    const html = text.replace(/---/g, '</p><p>');
     return `<p>${html}</p>`;
+}
+
+// Formatuoja datą, jei ji masyvo formatu [2025, 6, 17]
+function formatDate(date) {
+    if (!date) return '';
+    if (Array.isArray(date)) {
+        const [y, m, d] = date;
+        return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    }
+    return date;
 }

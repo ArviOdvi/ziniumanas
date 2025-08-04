@@ -19,7 +19,7 @@ export default function ArticleCard({ article }) {
             </div>
             <h2>
                 <Link
-                    to={`/api/straipsnis/${article.id || ''}`} // Apsauga nuo undefined
+                    to={`/straipsnis/${article.id || ''}`} // Apsauga nuo undefined
                     className="text-dark text-decoration-none"
                     onClick={handleSaveArticleId}
                 >
@@ -28,7 +28,7 @@ export default function ArticleCard({ article }) {
             </h2>
             <div dangerouslySetInnerHTML={{ __html: formatHtml(article.contents) }} />
             <Link
-                to={`/api/straipsnis/${article.id || ''}`} // Apsauga nuo undefined
+                to={`/straipsnis/${article.id || ''}`} // Apsauga nuo undefined
                 className="btn btn-sm btn-primary mt-2"
                 onClick={handleSaveArticleId}
             >

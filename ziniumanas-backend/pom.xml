@@ -2,37 +2,17 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <parent>
         <groupId>lt.ziniumanas</groupId>
         <artifactId>ziniumanas</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
     <artifactId>ziniumanas-backend</artifactId>
     <packaging>pom</packaging>
-
-    <name>BACKEND Module</name>
-    <description>Bendras Main modulis</description>
+    <name>Backend</name>
 
     <modules>
-        <module>api</module>
         <module>main</module>
+        <module>api</module>
     </modules>
-
-    <properties>
-        <java.version>21</java.version>
-        <dl4j.version>1.0.0-M2.1</dl4j.version>
-        <logback.version>1.5.18</logback.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>lt.ziniumanas</groupId>
-            <artifactId>api</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-    </dependencies>
 </project>
