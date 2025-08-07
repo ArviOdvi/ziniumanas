@@ -6,17 +6,17 @@ services:
     restart: always
     environment:
       POSTGRES_DB: newsman_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
   backend:
     build:
-      context: ./ziniumanas-backend/main
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./main/Dockerfile
     depends_on:
       - postgres
       - ai-classifier
@@ -43,6 +43,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5000:5000"
+    restart: unless-stopped
 
 volumes:
   postgres_data:

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>lt.ziniumanas</groupId>
-    <artifactId>ziniumanas-frontend</artifactId>
+    <artifactId>Frontend</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
 
