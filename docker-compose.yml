@@ -7,43 +7,48 @@ services:
     environment:
       POSTGRES_DB: newsman_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
       context: .
-      dockerfile: ./main/Dockerfile
+      dockerfile: ziniumanas-backend/Dockerfile
+    volumes:
+      - ./certs:/app/certs
     depends_on:
-      - postgres
-      - ai-classifier
+      postgres:
+        condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/newsman_db
       SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       CLASSIFIER_URL: http://ai-classifier:5000
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   frontend:
     build:
-      context: ./ziniumanas-frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ziniumanas-frontend/Dockerfile
     ports:
       - "3000:80"
     depends_on:
       - backend
-
-  ai-classifier:
-    build:
-      context: C:\Users\Admin\Python_IdeaProjects\python-classifier-api
-      dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
 
 volumes:
   postgres_data:

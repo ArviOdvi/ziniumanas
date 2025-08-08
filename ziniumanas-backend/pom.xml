@@ -6,13 +6,14 @@
         <groupId>lt.ziniumanas</groupId>
         <artifactId>ziniumanas</artifactId>
         <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
     <artifactId>ziniumanas-backend</artifactId>
     <packaging>pom</packaging>
     <name>Backend</name>
 
     <modules>
-        <module>main</module>
         <module>api</module>
+        <module>main</module>
     </modules>
 </project>
