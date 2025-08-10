@@ -12,7 +12,7 @@ export default function Header() {
     const [language, setLanguage] = useState('LT');
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-    const categories1 = [
+    const categories1LT = [
         { path: '/', label: 'Naujienos' },
         { path: '/kategorija/pasaulyje', label: 'Pasaulyje' },
         { path: '/kategorija/ekonomika', label: 'Ekonomika' },
@@ -23,7 +23,7 @@ export default function Header() {
         { path: '/kategorija/sveikata', label: 'Sveikata' }
     ];
 
-    const categories2 = [
+    const categories2LT = [
         { path: '/kategorija/lietuvoje', label: 'Lietuvoje' },
         { path: '/kategorija/politika', label: 'Politika' },
         { path: '/kategorija/mokslas', label: 'Mokslas' },
@@ -31,6 +31,27 @@ export default function Header() {
         { path: '/kategorija/muzika', label: 'Muzika' },
         { path: '/kategorija/laisvalaikis', label: 'Laisvalaikis' },
         { path: '/kategorija/vaikams', label: 'Vaikams' }
+    ];
+
+    const categories3EN = [
+        { path: '/', label: 'News' },
+        { path: '/kategorija/pasaulyje', label: 'World' },
+        { path: '/kategorija/ekonomika', label: 'Economy' },
+        { path: '/kategorija/kultura', label: 'Culture' },
+        { path: '/kategorija/technologijos', label: 'Technology' },
+        { path: '/kategorija/istorija', label: 'History' },
+        { path: '/kategorija/maistas', label: 'Food' },
+        { path: '/kategorija/sveikata', label: 'Health' }
+    ];
+
+    const categories4EN = [
+        { path: '/kategorija/lietuvoje', label: 'Lithuania' },
+        { path: '/kategorija/politika', label: 'Politics' },
+        { path: '/kategorija/mokslas', label: 'Science' },
+        { path: '/kategorija/sportas', label: 'Sports' },
+        { path: '/kategorija/muzika', label: 'Music' },
+        { path: '/kategorija/laisvalaikis', label: 'Leisure' },
+        { path: '/kategorija/vaikams', label: 'Kids' }
     ];
 
     const renderCategoryLinks = (categories) => (
@@ -57,7 +78,7 @@ export default function Header() {
     const handleLanguageChange = (lang) => {
         setLanguage(lang);
         setIsDropdownOpen(false);
-        console.log('Pasirinkta kalba:', lang);
+        console.log('Selected language:', lang);
     };
 
     useEffect(() => {
@@ -66,11 +87,14 @@ export default function Header() {
         }
     }, [location.pathname]);
 
+    const categories1 = language === 'LT' ? categories1LT : categories3EN;
+    const categories2 = language === 'LT' ? categories2LT : categories4EN;
+
     return (
         <header className="bg-dark text-white p-3">
             <div className="d-flex justify-content-between align-items-center">
                 <Link to="/" className="text-white text-decoration-none h2">
-                    <img src="/ziniumanas.png" alt="Ziniumanas logotipas" style={{ maxHeight: '50px' }} />
+                    <img src="/ziniumanas.png" alt="Ziniumanas logo" style={{ maxHeight: '50px' }} />
                 </Link>
 
                 <div
@@ -78,7 +102,9 @@ export default function Header() {
                     style={{ maxWidth: '200px', height: 'auto', aspectRatio: '10 / 3' }}
                 >
                     <p className="fst-italic" style={{ fontSize: '0.6rem', marginBottom: '0.125rem' }}>
-                        Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.
+                        {language === 'LT'
+                            ? 'Akmens amžius baigėsi ne dėl to, kad baigėsi akmens ištekliai. Tiesiog kažkas pasiūlė geresnę idėją.'
+                            : 'The Stone Age didn’t end because we ran out of stones. Someone just came up with a better idea.'}
                     </p>
                 </div>
 
@@ -126,7 +152,7 @@ export default function Header() {
                     {isLoggedIn ? (
                         <>
                             <button className="btn btn-outline-light" onClick={logout}>
-                                Atsijungti
+                                {language === 'LT' ? 'Atsijungti' : 'Logout'}
                             </button>
                             {user && user.role === 'ADMIN' ? (
                                 <Link to="/admin" className="btn btn-outline-light">
@@ -139,23 +165,25 @@ export default function Header() {
                     ) : (
                         <>
                             <Link to="/login" className="btn btn-outline-light">
-                                Prisijungti
+                                {language === 'LT' ? 'Prisijungti' : 'Login'}
                             </Link>
                             <Link to="/register" className="btn btn-outline-light">
-                                Registracija
+                                {language === 'LT' ? 'Registracija' : 'Register'}
                             </Link>
                         </>
                     )}
                 </div>
 
                 <form className="d-flex mt-2 mt-md-0 ms-3" onSubmit={handleSearch}>
-                    <label htmlFor="searchInput" className="visually-hidden">Ieškoti</label>
+                    <label htmlFor="searchInput" className="visually-hidden">
+                        {language === 'LT' ? 'Ieškoti' : 'Search'}
+                    </label>
                     <input
                         className="form-control me-2"
                         type="search"
                         id="searchInput"
                         name="q"
-                        placeholder="Ieškoti..."
+                        placeholder={language === 'LT' ? 'Ieškoti...' : 'Search...'}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
