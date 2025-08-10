@@ -9,6 +9,8 @@ export default function Header() {
     const navigate = useNavigate();
     const { isLoggedIn, user, logout } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
+    const [language, setLanguage] = useState('LT');
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const categories1 = [
         { path: '/', label: 'Naujienos' },
@@ -52,6 +54,12 @@ export default function Header() {
         }
     };
 
+    const handleLanguageChange = (lang) => {
+        setLanguage(lang);
+        setIsDropdownOpen(false);
+        console.log('Pasirinkta kalba:', lang);
+    };
+
     useEffect(() => {
         if (!location.pathname.startsWith('/search')) {
             setSearchQuery('');
@@ -84,17 +92,49 @@ export default function Header() {
                 </nav>
 
                 <div className="d-flex align-items-center gap-2">
+                    <div className="custom-dropdown" style={{ width: '40px' }}>
+                        <button
+                            className="btn btn-outline-light dropdown-toggle"
+                            style={{ padding: '2px 5px', fontSize: '12px' }}
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        >
+                            <span className="first-letter">{language[0]}</span>
+                            <span className="second-letter">{language[1]}</span>
+                        </button>
+                        {isDropdownOpen && (
+                            <div className="dropdown-menu show" style={{ minWidth: '40px', fontSize: '12px' }}>
+                                <button
+                                    className="dropdown-item"
+                                    onClick={() => handleLanguageChange('LT')}
+                                >
+                                    <span className="first-letter">L</span>
+                                    <span className="second-letter">T</span>
+                                </button>
+                                <button
+                                    className="dropdown-item"
+                                    onClick={() => handleLanguageChange('EN')}
+                                >
+                                    <span className="first-letter">E</span>
+                                    <span className="second-letter">N</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="d-flex align-items-center gap-2">
                     {isLoggedIn ? (
                         <>
                             <button className="btn btn-outline-light" onClick={logout}>
                                 Atsijungti
                             </button>
-                            {user.role === 'ADMIN' ?
+                            {user && user.role === 'ADMIN' ? (
                                 <Link to="/admin" className="btn btn-outline-light">
                                     ADMIN
                                 </Link>
-                            : user.username}
-
+                            ) : (
+                                user && user.username
+                            )}
                         </>
                     ) : (
                         <>

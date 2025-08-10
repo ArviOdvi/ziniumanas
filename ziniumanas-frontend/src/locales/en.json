@@ -1,0 +1,29 @@
+{
+  "header": {
+    "logout": "Logout",
+    "admin": "ADMIN",
+    "login": "Login",
+    "register": "Register",
+    "searchPlaceholder": "Search...",
+    "slogan": "The Stone Age didn't end because we ran out of stones. Someone just came up with a better idea.",
+    "categories1": {
+      "news": "News",
+      "world": "World",
+      "economy": "Economy",
+      "culture": "Culture",
+      "technology": "Technology",
+      "history": "History",
+      "food": "Food",
+      "health": "Health"
+    },
+    "categories2": {
+      "lithuania": "Lithuania",
+      "politics": "Politics",
+      "science": "Science",
+      "sports": "Sports",
+      "music": "Music",
+      "leisure": "Leisure",
+      "kids": "Kids"
+    }
+  }
+}
