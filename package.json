@@ -1,0 +1,25 @@
+{
+  "name": "ziniumanas",
+  "version": "1.0.0",
+  "description": "Šis projektas yra žinių tinklalapis, skirtas rinkti ir pateikti naujienas iš įvairių atvirų interneto šaltinių.\r Tinklalapį prižiūri vienas asmuo, o informacijos apdorojimui ir valdymui yra pasitelkiamas dirbtinis intelektas (DI).\r Projektas siekia vartotojams pateikti aktualų ir įvairiapusį naujienų srautą.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ArviOdvi/ziniumanas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ArviOdvi/ziniumanas/issues"
+  },
+  "homepage": "https://github.com/ArviOdvi/ziniumanas#readme",
+  "dependencies": {
+    "i18next": "^25.3.4",
+    "react-i18next": "^15.6.1"
+  }
+}
